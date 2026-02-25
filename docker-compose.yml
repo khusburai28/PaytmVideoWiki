@@ -33,7 +33,7 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
       - QDRANT_COLLECTION=${QDRANT_COLLECTION:-video_transcripts}
-      - MAX_VIDEO_SIZE_MB=${MAX_VIDEO_SIZE_MB:-500}
+      - MAX_VIDEO_SIZE_MB=${MAX_VIDEO_SIZE_MB:-5120}
       - UPLOAD_DIR=/app/uploads
       - TEMP_DIR=/app/temp
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-gemini-embedding-004}

@@ -315,10 +315,10 @@ async def list_videos():
         videos.append(
             VideoInfo(
                 video_id=video_id,
-                filename=meta['filename'],
+                filename=meta.get('filename', 'Unknown'),
                 duration=meta.get('duration'),
-                upload_date=meta['upload_date'],
-                status=meta['status'],
+                upload_date=meta.get('upload_date', datetime.now()),
+                status=meta.get('status', 'unknown'),
                 total_segments=meta.get('total_segments')
             )
         )

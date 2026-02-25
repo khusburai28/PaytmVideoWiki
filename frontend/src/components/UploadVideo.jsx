@@ -135,7 +135,7 @@ function UploadVideo({ onVideoUploaded }) {
               </label>
             </p>
             <p className="upload-hint">
-              Supported formats: MP4, AVI, MOV, MKV, WEBM (max 500MB)
+              Supported formats: MP4, AVI, MOV, MKV, WEBM (max 5GB)
             </p>
           </>
         ) : uploading ? (
