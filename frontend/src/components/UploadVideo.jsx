@@ -7,8 +7,12 @@ function UploadVideo({ onVideoUploaded }) {
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const [dragActive, setDragActive] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [videoName, setVideoName] = useState('')
+  const [videoDescription, setVideoDescription] = useState('')
+  const [showForm, setShowForm] = useState(false)
 
-  const handleUpload = async (file) => {
+  const handleFileSelected = (file) => {
     if (!file) return
 
     // Validate file type
@@ -18,12 +22,27 @@ function UploadVideo({ onVideoUploaded }) {
       return
     }
 
+    setSelectedFile(file)
+    setShowForm(true)
+    setError(null)
+  }
+
+  const handleUpload = async (e) => {
+    e.preventDefault()
+
+    if (!selectedFile || !videoName.trim() || !videoDescription.trim()) {
+      setError('Please fill in all fields')
+      return
+    }
+
     setUploading(true)
     setError(null)
 
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', selectedFile)
+      formData.append('name', videoName)
+      formData.append('description', videoDescription)
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -95,68 +114,115 @@ function UploadVideo({ onVideoUploaded }) {
     setDragActive(false)
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleUpload(e.dataTransfer.files[0])
+      handleFileSelected(e.dataTransfer.files[0])
     }
   }
 
   const handleFileInput = (e) => {
     if (e.target.files && e.target.files[0]) {
-      handleUpload(e.target.files[0])
+      handleFileSelected(e.target.files[0])
     }
+  }
+
+  const handleCancel = () => {
+    setSelectedFile(null)
+    setVideoName('')
+    setVideoDescription('')
+    setShowForm(false)
+    setError(null)
   }
 
   return (
     <div className="upload-container">
       <h2>Upload Knowledge Transfer Video</h2>
 
-      <div
-        className={`drop-zone ${dragActive ? 'active' : ''}`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          id="video-upload"
-          accept="video/*"
-          onChange={handleFileInput}
-          disabled={uploading || processing}
-          style={{ display: 'none' }}
-        />
+      {!showForm && !uploading && !processing ? (
+        <div
+          className={`drop-zone ${dragActive ? 'active' : ''}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="video-upload"
+            accept="video/*"
+            onChange={handleFileInput}
+            style={{ display: 'none' }}
+          />
+          <div className="upload-icon">📹</div>
+          <p className="upload-text">
+            Drag and drop your KT video here, or{' '}
+            <label htmlFor="video-upload" className="upload-link">
+              browse
+            </label>
+          </p>
+          <p className="upload-hint">
+            Supported formats: MP4, AVI, MOV, MKV, WEBM (max 5GB)
+          </p>
+        </div>
+      ) : showForm && !uploading && !processing ? (
+        <form onSubmit={handleUpload} className="video-metadata-form">
+          <div className="selected-file">
+            <span className="file-icon">📄</span>
+            <span className="file-name">{selectedFile?.name}</span>
+          </div>
 
-        {!uploading && !processing ? (
-          <>
-            <div className="upload-icon">📹</div>
-            <p className="upload-text">
-              Drag and drop your KT video here, or{' '}
-              <label htmlFor="video-upload" className="upload-link">
-                browse
-              </label>
-            </p>
-            <p className="upload-hint">
-              Supported formats: MP4, AVI, MOV, MKV, WEBM (max 5GB)
-            </p>
-          </>
-        ) : uploading ? (
-          <>
-            <div className="loading-spinner"></div>
-            <p className="upload-text">Uploading KT video...</p>
-          </>
-        ) : (
-          <>
-            <div className="loading-spinner"></div>
-            <p className="upload-text">Processing video for AI search...</p>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${progress}%` }}></div>
-            </div>
-            <p className="progress-text">{progress}%</p>
-            <p className="upload-hint">
-              Transcribing and indexing content (2-5 minutes)
-            </p>
-          </>
-        )}
-      </div>
+          <div className="form-group">
+            <label htmlFor="video-name">Video Title *</label>
+            <input
+              type="text"
+              id="video-name"
+              value={videoName}
+              onChange={(e) => setVideoName(e.target.value)}
+              placeholder="e.g., React Hooks Deep Dive"
+              maxLength={200}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="video-description">Description *</label>
+            <textarea
+              id="video-description"
+              value={videoDescription}
+              onChange={(e) => setVideoDescription(e.target.value)}
+              placeholder="Brief description of what this video covers..."
+              rows={4}
+              maxLength={1000}
+              required
+            />
+            <span className="char-count">{videoDescription.length}/1000</span>
+          </div>
+
+          <div className="form-actions">
+            <button type="button" onClick={handleCancel} className="btn-cancel">
+              Cancel
+            </button>
+            <button type="submit" className="btn-upload">
+              Upload & Process
+            </button>
+          </div>
+        </form>
+      ) : uploading ? (
+        <div className="upload-status">
+          <div className="loading-spinner"></div>
+          <p className="upload-text">Uploading KT video...</p>
+        </div>
+      ) : (
+        <div className="upload-status">
+          <div className="loading-spinner"></div>
+          <p className="upload-text">Processing video for AI search...</p>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+          </div>
+          <p className="progress-text">{progress}%</p>
+          <p className="upload-hint">
+            Transcribing and indexing content (2-5 minutes)
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="error-message">

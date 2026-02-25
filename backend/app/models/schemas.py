@@ -3,6 +3,11 @@ from typing import List, Optional
 from datetime import datetime
 
 
+class VideoUploadRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200, description="Video title/name")
+    description: str = Field(..., min_length=1, max_length=1000, description="Short description of the video")
+
+
 class VideoUploadResponse(BaseModel):
     video_id: str
     filename: str
@@ -52,6 +57,8 @@ class ChatResponse(BaseModel):
 
 class VideoInfo(BaseModel):
     video_id: str
+    name: str
+    description: str
     filename: str
     duration: Optional[float] = None
     upload_date: datetime

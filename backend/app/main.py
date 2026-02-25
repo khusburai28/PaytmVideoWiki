@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime
 
 from app.models.schemas import (
+    VideoUploadRequest,
     VideoUploadResponse,
     VideoProcessingStatus,
     ChatRequest,
@@ -100,7 +101,7 @@ video_metadata = {}
 
 
 # Background task for processing video
-async def process_video_task(video_id: str, video_path: str, filename: str):
+async def process_video_task(video_id: str, video_path: str, filename: str, name: str, description: str):
     """Background task to process video."""
     try:
         logger.info(f"Starting background processing for video {video_id}")
@@ -108,12 +109,24 @@ async def process_video_task(video_id: str, video_path: str, filename: str):
         # Process video (extract audio, transcribe)
         segments, duration = video_processor.process_video(video_path, video_id)
 
-        # Index segments in Qdrant
-        rag_engine.index_video_segments(video_id, segments)
+        # Index segments in Qdrant with video duration for derived chunks
+        rag_engine.index_video_segments(video_id, segments, duration)
 
-        # Update metadata
+        # Save video metadata to Qdrant
+        rag_engine.save_video_metadata(
+            video_id=video_id,
+            name=name,
+            description=description,
+            duration=duration,
+            filename=filename,
+            total_segments=len(segments)
+        )
+
+        # Update in-memory metadata for status tracking
         video_metadata[video_id] = {
             "filename": filename,
+            "name": name,
+            "description": description,
             "duration": duration,
             "upload_date": datetime.now(),
             "status": "completed",
@@ -146,7 +159,9 @@ async def root():
 @app.post("/api/upload", response_model=VideoUploadResponse)
 async def upload_video(
     background_tasks: BackgroundTasks,
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    description: str = Form(...)
 ):
     """Upload a video file for processing."""
     try:
@@ -176,12 +191,14 @@ async def upload_video(
         # Initialize metadata
         video_metadata[video_id] = {
             "filename": file.filename,
+            "name": name,
+            "description": description,
             "status": "processing",
             "upload_date": datetime.now()
         }
 
         # Start background processing
-        background_tasks.add_task(process_video_task, video_id, video_path, file.filename)
+        background_tasks.add_task(process_video_task, video_id, video_path, file.filename, name, description)
 
         return VideoUploadResponse(
             video_id=video_id,
@@ -236,6 +253,7 @@ async def chat(request: ChatRequest):
             raise HTTPException(status_code=404, detail="Video not found or not indexed")
 
         # Search for relevant segments
+        logger.info(f"User query: '{request.message}'")
         relevant_segments = rag_engine.search_segments(
             video_id=request.video_id,
             query=request.message,
@@ -243,11 +261,19 @@ async def chat(request: ChatRequest):
         )
 
         if not relevant_segments:
+            logger.info("No relevant segments found for query")
             return ChatResponse(
                 response="I couldn't find relevant information in the video to answer your question.",
                 timestamps=[],
                 sources_used=0
             )
+
+        # Log retrieved segments with scores
+        logger.info(f"Retrieved {len(relevant_segments)} segments for query:")
+        for idx, seg in enumerate(relevant_segments, 1):
+            timestamp = f"{int(seg['start_time']//60)}:{int(seg['start_time']%60):02d}"
+            text_preview = seg['text'][:80] + "..." if len(seg['text']) > 80 else seg['text']
+            logger.info(f"  {idx}. [Score: {seg['score']:.4f}] [{timestamp}] {text_preview}")
 
         # Generate response using Gemini
         conversation_history = [
@@ -310,46 +336,23 @@ async def get_video(video_id: str):
 
 @app.get("/api/videos", response_model=list[VideoInfo])
 async def list_videos():
-    """List all uploaded videos by querying Qdrant for unique video IDs."""
-    videos = []
-
+    """List all uploaded videos by querying Qdrant metadata collection."""
     try:
-        # Get all unique video IDs from Qdrant
-        indexed_video_ids = rag_engine.list_indexed_videos()
+        # Get all video metadata from Qdrant
+        all_metadata = rag_engine.list_all_video_metadata()
 
-        upload_dir = Path(settings.upload_dir)
-        temp_dir = Path(settings.temp_dir)
-
-        for video_id in indexed_video_ids:
-            # Find the video file
-            video_file = None
-            for ext in ['.mp4', '.avi', '.mov', '.mkv', '.webm']:
-                potential_file = upload_dir / f"{video_id}{ext}"
-                if potential_file.exists():
-                    video_file = potential_file
-                    break
-
-            if not video_file:
-                continue
-
-            # Get segment count from Qdrant
-            segment_count = rag_engine.get_video_segment_count(video_id)
-
-            # Get video duration
-            try:
-                probe = ffmpeg.probe(str(video_file))
-                duration = float(probe['streams'][0]['duration'])
-            except:
-                duration = None
-
+        videos = []
+        for metadata in all_metadata:
             videos.append(
                 VideoInfo(
-                    video_id=video_id,
-                    filename=video_file.name,
-                    duration=duration,
-                    upload_date=datetime.fromtimestamp(video_file.stat().st_mtime),
+                    video_id=metadata.get('video_id'),
+                    name=metadata.get('name', 'Untitled'),
+                    description=metadata.get('description', ''),
+                    filename=metadata.get('filename'),
+                    duration=metadata.get('duration'),
+                    upload_date=datetime.fromisoformat(metadata.get('upload_date')),
                     status='completed',
-                    total_segments=segment_count
+                    total_segments=metadata.get('total_segments', 0)
                 )
             )
 
@@ -362,18 +365,22 @@ async def list_videos():
 @app.delete("/api/video/{video_id}")
 async def delete_video(video_id: str):
     """Delete a video and its data."""
-    if video_id not in video_metadata:
+    # Check if video exists in Qdrant
+    segment_count = rag_engine.get_video_segment_count(video_id)
+    if segment_count == 0:
         raise HTTPException(status_code=404, detail="Video not found")
 
     try:
-        # Delete from Qdrant
+        # Delete from Qdrant (segments and metadata)
         rag_engine.delete_video_segments(video_id)
+        rag_engine.delete_video_metadata(video_id)
 
         # Delete video files
         video_processor.cleanup_video(video_id)
 
-        # Remove metadata
-        del video_metadata[video_id]
+        # Remove from in-memory metadata if exists (for currently processing videos)
+        if video_id in video_metadata:
+            del video_metadata[video_id]
 
         return {"message": "Video deleted successfully"}
 

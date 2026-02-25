@@ -64,6 +64,42 @@ class VideoProcessor:
             logger.error(f"Failed to get video duration: {e}")
             return 0.0
 
+    def merge_small_segments(self, segments: List[Dict], min_duration: float = 15.0) -> List[Dict]:
+        """Merge small segments to create larger, more meaningful chunks."""
+        if not segments:
+            return []
+
+        merged = []
+        current_chunk = {
+            "text": segments[0]['text'],
+            "start_time": segments[0]['start_time'],
+            "end_time": segments[0]['end_time'],
+            "confidence": segments[0].get('confidence', 0.0)
+        }
+
+        for segment in segments[1:]:
+            chunk_duration = current_chunk['end_time'] - current_chunk['start_time']
+
+            # Merge if current chunk is too short or text is too brief
+            if chunk_duration < min_duration or len(current_chunk['text']) < 100:
+                current_chunk['text'] += " " + segment['text']
+                current_chunk['end_time'] = segment['end_time']
+                current_chunk['confidence'] = (current_chunk['confidence'] + segment.get('confidence', 0.0)) / 2
+            else:
+                merged.append(current_chunk)
+                current_chunk = {
+                    "text": segment['text'],
+                    "start_time": segment['start_time'],
+                    "end_time": segment['end_time'],
+                    "confidence": segment.get('confidence', 0.0)
+                }
+
+        # Add the last chunk
+        merged.append(current_chunk)
+
+        logger.info(f"Merged {len(segments)} segments into {len(merged)} chunks (min duration: {min_duration}s)")
+        return merged
+
     def transcribe_audio(self, audio_path: str, video_id: str) -> List[Dict]:
         """Transcribe audio using Whisper and return segments with timestamps."""
         try:
@@ -88,14 +124,17 @@ class VideoProcessor:
                     "confidence": segment.get('confidence', 0.0)
                 })
 
-            logger.info(f"Transcription complete: {len(segments)} segments")
+            logger.info(f"Transcription complete: {len(segments)} raw segments")
+
+            # Merge small segments into larger chunks (15 seconds minimum)
+            merged_segments = self.merge_small_segments(segments, min_duration=15.0)
 
             # Save transcription to file for backup
             transcript_path = self.temp_dir / f"{video_id}_transcript.json"
             with open(transcript_path, "w") as f:
-                json.dump(segments, f, indent=2)
+                json.dump(merged_segments, f, indent=2)
 
-            return segments
+            return merged_segments
 
         except Exception as e:
             logger.error(f"Transcription failed: {e}")

@@ -66,8 +66,16 @@ function App() {
                         🎥
                       </div>
                       <div className="video-card-content">
-                        <h3>{video.filename}</h3>
+                        <h3 className="video-title">{video.name || video.filename}</h3>
+                        <p className="video-description">
+                          {video.description || 'No description'}
+                        </p>
                         <div className="video-card-meta">
+                          {video.duration && (
+                            <span className="video-badge">
+                              ⏱️ {Math.floor(video.duration / 60)}:{(video.duration % 60).toFixed(0).padStart(2, '0')} min
+                            </span>
+                          )}
                           <span className="video-badge">
                             📊 {video.total_segments} segments
                           </span>
@@ -96,9 +104,16 @@ function App() {
                 >
                   ← Library
                 </button>
-                <h3 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
-                  {currentVideo.filename}
-                </h3>
+                <div className="video-header-info">
+                  <h3 className="video-header-title">
+                    {currentVideo.name || currentVideo.filename}
+                  </h3>
+                  {currentVideo.description && (
+                    <p className="video-header-description">
+                      {currentVideo.description}
+                    </p>
+                  )}
+                </div>
               </div>
               <VideoPlayer
                 videoId={currentVideo.video_id}
