@@ -29,8 +29,8 @@ class RAGEngine:
         logger.info(f"Initializing Gemini embedding model: {embedding_model}")
         self.genai_client = genai.Client(api_key=gemini_api_key)
 
-        # Gemini embedding dimension is 768 for gemini-embedding-004
-        self.embedding_dim = 768
+        # Gemini embedding dimension is 3072 for gemini-embedding-001
+        self.embedding_dim = 3072
 
         # Create collection if it doesn't exist
         self._ensure_collection_exists()
@@ -69,18 +69,41 @@ class RAGEngine:
             logger.error(f"Failed to generate embedding: {e}")
             raise
 
+    def _generate_embeddings_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts in batch (faster)."""
+        try:
+            # Gemini API supports batch embedding
+            result = self.genai_client.models.embed_content(
+                model=self.embedding_model_name,
+                contents=texts
+            )
+            return [emb.values for emb in result.embeddings]
+        except Exception as e:
+            logger.error(f"Failed to generate batch embeddings: {e}")
+            raise
+
     def index_video_segments(self, video_id: str, segments: List[Dict]):
         """Index video transcript segments into Qdrant."""
         try:
             logger.info(f"Indexing {len(segments)} segments for video {video_id}")
 
+            # Extract all texts for batch embedding
+            texts = [segment['text'] for segment in segments]
+
+            # Generate embeddings in batches for speed
+            logger.info(f"Generating embeddings in batches...")
+            all_embeddings = []
+            batch_size = 100  # Gemini API batch limit
+
+            for i in range(0, len(texts), batch_size):
+                batch_texts = texts[i:i + batch_size]
+                logger.info(f"Processing embedding batch {i//batch_size + 1}/{(len(texts)-1)//batch_size + 1}")
+                batch_embeddings = self._generate_embeddings_batch(batch_texts)
+                all_embeddings.extend(batch_embeddings)
+
             # Prepare points for insertion
             points = []
-            for idx, segment in enumerate(segments):
-                # Generate embedding for the text using Gemini
-                embedding = self._generate_embedding(segment['text'])
-
-                # Create point with metadata
+            for idx, (segment, embedding) in enumerate(zip(segments, all_embeddings)):
                 point = PointStruct(
                     id=str(uuid.uuid4()),
                     vector=embedding,
@@ -95,10 +118,11 @@ class RAGEngine:
                 )
                 points.append(point)
 
-            # Upload points in batches
-            batch_size = 100
-            for i in range(0, len(points), batch_size):
-                batch = points[i:i + batch_size]
+            # Upload points to Qdrant in batches
+            logger.info(f"Uploading {len(points)} vectors to Qdrant...")
+            qdrant_batch_size = 100
+            for i in range(0, len(points), qdrant_batch_size):
+                batch = points[i:i + qdrant_batch_size]
                 self.qdrant_client.upsert(
                     collection_name=self.collection_name,
                     points=batch
