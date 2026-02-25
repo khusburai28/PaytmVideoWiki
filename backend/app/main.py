@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 import logging
 import os
+import ffmpeg
 from pathlib import Path
 from datetime import datetime
 
@@ -293,36 +294,75 @@ async def chat(request: ChatRequest):
 @app.get("/api/video/{video_id}")
 async def get_video(video_id: str):
     """Serve video file."""
-    if video_id not in video_metadata:
-        raise HTTPException(status_code=404, detail="Video not found")
+    # Find video file by video_id
+    upload_dir = Path(settings.upload_dir)
+    video_file = None
 
-    video_path = video_metadata[video_id].get('video_path')
-    if not video_path or not os.path.exists(video_path):
+    for ext in ['.mp4', '.avi', '.mov', '.mkv', '.webm']:
+        potential_file = upload_dir / f"{video_id}{ext}"
+        if potential_file.exists():
+            video_file = potential_file
+            break
+
+    if not video_file:
         raise HTTPException(status_code=404, detail="Video file not found")
 
     return FileResponse(
-        video_path,
+        str(video_file),
         media_type="video/mp4",
-        filename=video_metadata[video_id]['filename']
+        filename=video_file.name
     )
 
 
 @app.get("/api/videos", response_model=list[VideoInfo])
 async def list_videos():
-    """List all uploaded videos."""
+    """List all uploaded videos by querying Qdrant for unique video IDs."""
     videos = []
-    for video_id, meta in video_metadata.items():
-        videos.append(
-            VideoInfo(
-                video_id=video_id,
-                filename=meta.get('filename', 'Unknown'),
-                duration=meta.get('duration'),
-                upload_date=meta.get('upload_date', datetime.now()),
-                status=meta.get('status', 'unknown'),
-                total_segments=meta.get('total_segments')
+
+    try:
+        # Get all unique video IDs from Qdrant
+        indexed_video_ids = rag_engine.list_indexed_videos()
+
+        upload_dir = Path(settings.upload_dir)
+        temp_dir = Path(settings.temp_dir)
+
+        for video_id in indexed_video_ids:
+            # Find the video file
+            video_file = None
+            for ext in ['.mp4', '.avi', '.mov', '.mkv', '.webm']:
+                potential_file = upload_dir / f"{video_id}{ext}"
+                if potential_file.exists():
+                    video_file = potential_file
+                    break
+
+            if not video_file:
+                continue
+
+            # Get segment count from Qdrant
+            segment_count = rag_engine.get_video_segment_count(video_id)
+
+            # Get video duration
+            try:
+                probe = ffmpeg.probe(str(video_file))
+                duration = float(probe['streams'][0]['duration'])
+            except:
+                duration = None
+
+            videos.append(
+                VideoInfo(
+                    video_id=video_id,
+                    filename=video_file.name,
+                    duration=duration,
+                    upload_date=datetime.fromtimestamp(video_file.stat().st_mtime),
+                    status='completed',
+                    total_segments=segment_count
+                )
             )
-        )
-    return videos
+
+        return videos
+    except Exception as e:
+        logger.error(f"Failed to list videos: {e}")
+        return []
 
 
 @app.delete("/api/video/{video_id}")
