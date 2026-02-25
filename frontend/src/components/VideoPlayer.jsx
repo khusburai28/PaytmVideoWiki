@@ -45,12 +45,11 @@ function VideoPlayer({ videoId, seekTime }) {
   useEffect(() => {
     const player = playerRef.current
 
-    if (player && seekTime !== undefined && seekTime !== null) {
-      player.ready(() => {
-        player.currentTime(seekTime)
-        player.play().catch(err => {
-          console.log('Play prevented:', err)
-        })
+    if (player && !player.isDisposed() && seekTime !== undefined && seekTime !== null) {
+      // Set current time directly without ready() since player is already initialized
+      player.currentTime(seekTime)
+      player.play().catch(err => {
+        console.log('Play prevented:', err)
       })
     }
   }, [seekTime])

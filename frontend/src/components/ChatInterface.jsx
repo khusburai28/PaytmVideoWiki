@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import WavingHandIcon from '@mui/icons-material/WavingHand'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
+import MovieIcon from '@mui/icons-material/Movie'
+import SendIcon from '@mui/icons-material/Send'
 import './ChatInterface.css'
 
 function ChatInterface({ videoId, onTimestampClick }) {
@@ -92,14 +97,20 @@ function ChatInterface({ videoId, onTimestampClick }) {
   return (
     <div className="chat-interface">
       <div className="chat-header">
-        <h2>🤖 AI Learning Assistant</h2>
+        <h2>
+          <SmartToyIcon sx={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
+          AI Learning Assistant
+        </h2>
         <p>Get instant answers from the KT session</p>
       </div>
 
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="welcome-message">
-            <p>👋 Welcome to your KT Video Assistant!</p>
+            <p>
+              <WavingHandIcon sx={{ fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem' }} />
+              Welcome to your KT Video Assistant!
+            </p>
             <p>I'm here to help you learn from this knowledge transfer video. Ask me anything about the content, and I'll provide answers with precise timestamps!</p>
             <div className="example-questions">
               <p><strong>Example questions:</strong></p>
@@ -126,7 +137,10 @@ function ChatInterface({ videoId, onTimestampClick }) {
 
               {message.timestamps && message.timestamps.length > 0 && (
                 <div className="timestamps-section">
-                  <p className="timestamps-label">📍 Jump to relevant moments:</p>
+                  <p className="timestamps-label">
+                    <LocationOnIcon sx={{ fontSize: '0.95rem', verticalAlign: 'middle', marginRight: '0.3rem' }} />
+                    Jump to relevant moments:
+                  </p>
                   {message.timestamps.map((ts, idx) => (
                     <div
                       key={idx}
@@ -134,7 +148,9 @@ function ChatInterface({ videoId, onTimestampClick }) {
                       onClick={() => onTimestampClick(ts.start_time)}
                       title={ts.text}
                     >
-                      <span className="timestamp-icon">🎬</span>
+                      <span className="timestamp-icon">
+                        <MovieIcon sx={{ fontSize: '1.1rem' }} />
+                      </span>
                       <span className="timestamp-time">{formatTime(ts.start_time)}</span>
                       <span className="timestamp-preview">{ts.text}</span>
                     </div>
@@ -175,7 +191,7 @@ function ChatInterface({ videoId, onTimestampClick }) {
           onClick={handleSend}
           disabled={!input.trim() || loading}
         >
-          {loading ? '...' : '➤'}
+          {loading ? '...' : <SendIcon sx={{ fontSize: '1.2rem' }} />}
         </button>
       </div>
     </div>

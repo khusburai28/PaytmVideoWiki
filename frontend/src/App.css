@@ -1,6 +1,10 @@
 .app {
   min-height: 100vh;
+  height: 100vh;
   background: var(--bg-secondary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .app-header {
@@ -8,9 +12,7 @@
   padding: 0;
   box-shadow: var(--shadow-sm);
   border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-shrink: 0;
 }
 
 .header-content {
@@ -47,14 +49,22 @@
 }
 
 .app-container {
-  max-width: 1800px;
-  margin: 0 auto;
-  padding: 2rem;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: row;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .upload-section {
   max-width: 900px;
   margin: 0 auto;
+  padding: 3rem 2rem;
 }
 
 .video-list {
@@ -167,13 +177,12 @@
   color: var(--text-tertiary) !important;
 }
 
-.main-interface {
+.player-interface {
   display: grid;
   grid-template-columns: 1fr 420px;
   gap: 1.5rem;
-  max-width: 1800px;
-  margin: 0 auto;
   padding: 1.5rem;
+  height: 100%;
 }
 
 .video-section {
@@ -187,37 +196,13 @@
 }
 
 .video-header {
-  padding: 1rem 1.5rem;
+  padding: 1.5rem;
   border-bottom: 1px solid var(--border-color);
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
   background: var(--bg-primary);
 }
 
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: transparent;
-  border: none;
-  color: var(--paytm-blue);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  flex-shrink: 0;
-}
-
-.back-button:hover {
-  background: var(--paytm-sky);
-}
-
 .video-header-info {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .video-header-title {
@@ -234,6 +219,40 @@
   line-height: 1.4;
 }
 
+.video-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.delete-video-btn {
+  padding: 0.65rem 1.25rem;
+  background: transparent;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.delete-video-btn:hover {
+  background: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.delete-video-btn:active {
+  transform: translateY(0);
+}
+
 .chat-section {
   background: var(--bg-primary);
   border-radius: 12px;
@@ -246,7 +265,7 @@
 }
 
 .paytm-footer {
-  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .footer-stripe {
@@ -269,13 +288,17 @@
 }
 
 @media (max-width: 1024px) {
-  .main-interface {
+  .player-interface {
     grid-template-columns: 1fr;
     height: auto;
   }
 
   .chat-section {
     min-height: 600px;
+  }
+
+  .app-container {
+    flex-direction: column;
   }
 }
 

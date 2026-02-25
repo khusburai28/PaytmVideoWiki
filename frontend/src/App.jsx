@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import VideoPlayer from './components/VideoPlayer'
 import ChatInterface from './components/ChatInterface'
 import UploadVideo from './components/UploadVideo'
+import VideoSidebar from './components/VideoSidebar'
+import DeleteIcon from '@mui/icons-material/Delete'
 import './App.css'
 
 function App() {
@@ -16,6 +18,39 @@ function App() {
 
   const handleTimestampClick = (timestamp) => {
     setVideoTime(timestamp)
+  }
+
+  const handleVideoSelect = (video) => {
+    setCurrentVideo(video)
+  }
+
+  const handleDeleteVideo = async (videoId) => {
+    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/video/${videoId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete video')
+      }
+
+      // Clear current video if it was deleted
+      if (currentVideo?.video_id === videoId) {
+        setCurrentVideo(null)
+      }
+
+      // Reload video list
+      loadVideos()
+
+      alert('Video deleted successfully')
+    } catch (error) {
+      console.error('Failed to delete video:', error)
+      alert('Failed to delete video. Please try again.')
+    }
   }
 
   const loadVideos = async () => {
@@ -48,87 +83,56 @@ function App() {
       </header>
 
       <div className="app-container">
-        {!currentVideo ? (
-          <div className="upload-section">
-            <UploadVideo onVideoUploaded={handleVideoUploaded} />
+        <VideoSidebar
+          videos={videos}
+          currentVideo={currentVideo}
+          onVideoSelect={handleVideoSelect}
+        />
 
-            {videos.length > 0 && (
-              <div className="video-list">
-                <h2>📚 KT Video Library</h2>
-                <div className="video-grid">
-                  {videos.map(video => (
-                    <div
-                      key={video.video_id}
-                      className="video-card"
-                      onClick={() => setCurrentVideo(video)}
-                    >
-                      <div className="video-card-thumbnail">
-                        🎥
-                      </div>
-                      <div className="video-card-content">
-                        <h3 className="video-title">{video.name || video.filename}</h3>
-                        <p className="video-description">
-                          {video.description || 'No description'}
-                        </p>
-                        <div className="video-card-meta">
-                          {video.duration && (
-                            <span className="video-badge">
-                              ⏱️ {Math.floor(video.duration / 60)}:{(video.duration % 60).toFixed(0).padStart(2, '0')} min
-                            </span>
-                          )}
-                          <span className="video-badge">
-                            📊 {video.total_segments} segments
-                          </span>
-                        </div>
-                        <p className="video-date">
-                          Uploaded {new Date(video.upload_date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+        <div className="main-content">
+          {!currentVideo ? (
+            <div className="upload-section">
+              <UploadVideo onVideoUploaded={handleVideoUploaded} />
+            </div>
+          ) : (
+            <div className="player-interface">
+              <div className="video-section">
+                <div className="video-header">
+                  <div className="video-header-info">
+                    <h3 className="video-header-title">
+                      {currentVideo.name || currentVideo.filename}
+                    </h3>
+                    {currentVideo.description && (
+                      <p className="video-header-description">
+                        {currentVideo.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <VideoPlayer
+                  videoId={currentVideo.video_id}
+                  seekTime={videoTime}
+                />
+                <div className="video-actions">
+                  <button
+                    className="delete-video-btn"
+                    onClick={() => handleDeleteVideo(currentVideo.video_id)}
+                  >
+                    <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                    Delete Video
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="main-interface">
-            <div className="video-section">
-              <div className="video-header">
-                <button
-                  className="back-button"
-                  onClick={() => setCurrentVideo(null)}
-                >
-                  ← Library
-                </button>
-                <div className="video-header-info">
-                  <h3 className="video-header-title">
-                    {currentVideo.name || currentVideo.filename}
-                  </h3>
-                  {currentVideo.description && (
-                    <p className="video-header-description">
-                      {currentVideo.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <VideoPlayer
-                videoId={currentVideo.video_id}
-                seekTime={videoTime}
-              />
-            </div>
 
-            <div className="chat-section">
-              <ChatInterface
-                videoId={currentVideo.video_id}
-                onTimestampClick={handleTimestampClick}
-              />
+              <div className="chat-section">
+                <ChatInterface
+                  videoId={currentVideo.video_id}
+                  onTimestampClick={handleTimestampClick}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <footer className="paytm-footer">

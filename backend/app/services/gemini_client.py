@@ -24,35 +24,41 @@ class GeminiClient:
         # Build context from retrieved segments
         context_text = self._build_context(context_segments)
 
-        # Build the prompt
-        system_prompt = """You are an expert knowledge transfer assistant helping developers learn from training videos.
+        # Log the context being used
+        logger.info(f"Building prompt with {len(context_segments)} context segments")
+        logger.debug(f"Context text preview: {context_text[:500]}...")
 
-Your role:
-- Answer questions naturally and conversationally as if you watched the video yourself
-- Use timestamps like [MM:SS] when referencing specific moments (e.g., "at [01:30], they explain...")
-- Be direct and concise - don't say phrases like "based on the transcript" or "according to the video"
-- Speak as if you're explaining the content directly
-- If information isn't available in what you know about the video, say "I don't see that covered in this video"
-- For technical topics, be precise and include key details
+        # Build the system prompt with context
+        system_prompt = f"""You are a concise knowledge transfer assistant for developer training videos.
 
-Here's what's covered in the video:
+Guidelines:
+- Keep answers SHORT and to-the-point (2-3 sentences max for simple questions)
+- Answer naturally as if you watched the video
+- Use timestamps [MM:SS] when referencing specific moments
+- Don't repeat information or over-explain
+- If asked "what is this about", give a ONE sentence summary
+- For detailed questions, provide focused details only
+- Skip phrases like "based on the transcript" - just answer directly
+
+Video Content:
 {context_text}
 """
 
+        # Build the user query
         user_prompt = f"""Question: {query}
 
-Answer naturally and include timestamps [MM:SS] when referencing specific moments."""
+Answer concisely using the video content. Keep it brief and natural."""
 
         try:
-            # Include conversation history if available
-            full_prompt = system_prompt + "\n\n" + user_prompt
-
-            if conversation_history:
+            # Build full prompt with conversation history if available
+            if conversation_history and len(conversation_history) > 0:
                 history_text = "\n".join([
                     f"{msg['role'].capitalize()}: {msg['content']}"
                     for msg in conversation_history[-6:]  # Last 3 exchanges
                 ])
-                full_prompt = f"{system_prompt}\n\nConversation History:\n{history_text}\n\n{user_prompt}"
+                full_prompt = f"{system_prompt}\n\nPrevious Conversation:\n{history_text}\n\n{user_prompt}"
+            else:
+                full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
             # Generate response using new API
             response = self.client.models.generate_content(

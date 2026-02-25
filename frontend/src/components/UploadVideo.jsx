@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import WarningIcon from '@mui/icons-material/Warning'
 import './UploadVideo.css'
 
 function UploadVideo({ onVideoUploaded }) {
@@ -226,7 +227,9 @@ function UploadVideo({ onVideoUploaded }) {
 
       {error && (
         <div className="error-message">
-          <span className="error-icon">⚠️</span>
+          <span className="error-icon">
+            <WarningIcon sx={{ fontSize: '1.2rem' }} />
+          </span>
           {error}
         </div>
       )}
