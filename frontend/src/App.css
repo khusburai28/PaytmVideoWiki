@@ -1,0 +1,147 @@
+.app {
+  min-height: 100vh;
+  background: #0f0f0f;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.app-header p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+.app-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.upload-section {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.video-list {
+  margin-top: 3rem;
+}
+
+.video-list h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.video-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.video-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.video-card-content h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-card-content p {
+  font-size: 0.9rem;
+  color: #999;
+  margin-bottom: 0.25rem;
+}
+
+.video-date {
+  font-size: 0.8rem !important;
+  color: #666 !important;
+}
+
+.main-interface {
+  display: grid;
+  grid-template-columns: 1fr 450px;
+  gap: 2rem;
+  height: calc(100vh - 180px);
+}
+
+.video-section {
+  background: #1a1a1a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.back-button {
+  align-self: flex-start;
+  background: #333;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  transition: background 0.2s;
+}
+
+.back-button:hover {
+  background: #444;
+}
+
+.chat-section {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .main-interface {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chat-section {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-container {
+    padding: 1rem;
+  }
+
+  .video-grid {
+    grid-template-columns: 1fr;
+  }
+}

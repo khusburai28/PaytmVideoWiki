@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: videorag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+    networks:
+      - videorag-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: videorag-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./temp:/app/temp
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.1-pro-preview}
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_COLLECTION=${QDRANT_COLLECTION:-video_transcripts}
+      - MAX_VIDEO_SIZE_MB=${MAX_VIDEO_SIZE_MB:-500}
+      - UPLOAD_DIR=/app/uploads
+      - TEMP_DIR=/app/temp
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-gemini-embedding-004}
+      - WHISPER_MODEL=${WHISPER_MODEL:-base}
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    networks:
+      - videorag-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: videorag-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - videorag-network
+
+volumes:
+  qdrant_data:
+    driver: local
+
+networks:
+  videorag-network:
+    driver: bridge
