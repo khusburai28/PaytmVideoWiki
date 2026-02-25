@@ -107,7 +107,7 @@ function UploadVideo({ onVideoUploaded }) {
 
   return (
     <div className="upload-container">
-      <h2>Upload Your Video</h2>
+      <h2>Upload Knowledge Transfer Video</h2>
 
       <div
         className={`drop-zone ${dragActive ? 'active' : ''}`}
@@ -129,7 +129,7 @@ function UploadVideo({ onVideoUploaded }) {
           <>
             <div className="upload-icon">📹</div>
             <p className="upload-text">
-              Drag and drop your video here, or{' '}
+              Drag and drop your KT video here, or{' '}
               <label htmlFor="video-upload" className="upload-link">
                 browse
               </label>
@@ -141,18 +141,18 @@ function UploadVideo({ onVideoUploaded }) {
         ) : uploading ? (
           <>
             <div className="loading-spinner"></div>
-            <p className="upload-text">Uploading video...</p>
+            <p className="upload-text">Uploading KT video...</p>
           </>
         ) : (
           <>
             <div className="loading-spinner"></div>
-            <p className="upload-text">Processing video...</p>
+            <p className="upload-text">Processing video for AI search...</p>
             <div className="progress-bar">
               <div className="progress-fill" style={{ width: `${progress}%` }}></div>
             </div>
             <p className="progress-text">{progress}%</p>
             <p className="upload-hint">
-              This may take 2-5 minutes depending on video length
+              Transcribing and indexing content (2-5 minutes)
             </p>
           </>
         )}
@@ -166,12 +166,13 @@ function UploadVideo({ onVideoUploaded }) {
       )}
 
       <div className="info-section">
-        <h3>How it works:</h3>
+        <h3>🎓 For Developers & New Joiners</h3>
         <ol>
-          <li>Upload your video (kept secure on your server)</li>
-          <li>AI transcribes and indexes the content</li>
-          <li>Ask questions and get answers with precise timestamps</li>
-          <li>Click timestamps to jump to relevant video moments</li>
+          <li>Upload your KT video securely to Paytm's platform</li>
+          <li>AI transcribes and indexes the content automatically</li>
+          <li>Ask questions about the video and get instant answers</li>
+          <li>Jump to specific topics with clickable timestamps</li>
+          <li>Perfect for onboarding, training, and knowledge sharing</li>
         </ol>
       </div>
     </div>

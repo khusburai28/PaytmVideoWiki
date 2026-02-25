@@ -91,21 +91,22 @@ function ChatInterface({ videoId, onTimestampClick }) {
   return (
     <div className="chat-interface">
       <div className="chat-header">
-        <h2>Chat with Video</h2>
-        <p>Ask questions about the video content</p>
+        <h2>🤖 AI Learning Assistant</h2>
+        <p>Get instant answers from the KT session</p>
       </div>
 
       <div className="chat-messages">
         {messages.length === 0 && (
           <div className="welcome-message">
-            <p>👋 Hi! I'm here to help you understand this video.</p>
-            <p>Ask me anything about the content, and I'll provide answers with relevant timestamps!</p>
+            <p>👋 Welcome to your KT Video Assistant!</p>
+            <p>I'm here to help you learn from this knowledge transfer video. Ask me anything about the content, and I'll provide answers with precise timestamps!</p>
             <div className="example-questions">
-              <p><strong>Try asking:</strong></p>
+              <p><strong>Example questions:</strong></p>
               <ul>
-                <li>"What are the main topics discussed?"</li>
-                <li>"Summarize the key points"</li>
-                <li>"What was said about [specific topic]?"</li>
+                <li>"What technologies are covered in this session?"</li>
+                <li>"How do I set up the development environment?"</li>
+                <li>"Explain the architecture discussed"</li>
+                <li>"What are the best practices mentioned?"</li>
               </ul>
             </div>
           </div>
@@ -158,7 +159,7 @@ function ChatInterface({ videoId, onTimestampClick }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Ask a question about the video..."
+          placeholder="Ask about concepts, setup steps, best practices..."
           rows={1}
           disabled={loading}
         />

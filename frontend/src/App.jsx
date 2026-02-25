@@ -35,8 +35,16 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Video RAG</h1>
-        <p>Chat with your videos using AI</p>
+        <div className="header-content">
+          <div className="header-logo">
+            <img src="/logo.svg" alt="Paytm Logo" className="paytm-logo-img" />
+            <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div>
+            <div>
+              <h1>Knowledge Transfer Hub</h1>
+              <p>Your onboarding & learning companion</p>
+            </div>
+          </div>
+        </div>
       </header>
 
       <div className="app-container">
@@ -46,7 +54,7 @@ function App() {
 
             {videos.length > 0 && (
               <div className="video-list">
-                <h2>Previously Uploaded Videos</h2>
+                <h2>📚 KT Video Library</h2>
                 <div className="video-grid">
                   {videos.map(video => (
                     <div
@@ -54,11 +62,22 @@ function App() {
                       className="video-card"
                       onClick={() => setCurrentVideo(video)}
                     >
+                      <div className="video-card-thumbnail">
+                        🎥
+                      </div>
                       <div className="video-card-content">
                         <h3>{video.filename}</h3>
-                        <p>{video.total_segments} segments</p>
+                        <div className="video-card-meta">
+                          <span className="video-badge">
+                            📊 {video.total_segments} segments
+                          </span>
+                        </div>
                         <p className="video-date">
-                          {new Date(video.upload_date).toLocaleDateString()}
+                          Uploaded {new Date(video.upload_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                         </p>
                       </div>
                     </div>
@@ -70,12 +89,17 @@ function App() {
         ) : (
           <div className="main-interface">
             <div className="video-section">
-              <button
-                className="back-button"
-                onClick={() => setCurrentVideo(null)}
-              >
-                ← Back to Videos
-              </button>
+              <div className="video-header">
+                <button
+                  className="back-button"
+                  onClick={() => setCurrentVideo(null)}
+                >
+                  ← Library
+                </button>
+                <h3 style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  {currentVideo.filename}
+                </h3>
+              </div>
               <VideoPlayer
                 videoId={currentVideo.video_id}
                 seekTime={videoTime}
@@ -91,6 +115,10 @@ function App() {
           </div>
         )}
       </div>
+
+      <footer className="paytm-footer">
+        <div className="footer-stripe"></div>
+      </footer>
     </div>
   )
 }
