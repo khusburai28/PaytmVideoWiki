@@ -25,23 +25,23 @@ class GeminiClient:
         context_text = self._build_context(context_segments)
 
         # Build the prompt
-        system_prompt = """You are a helpful AI assistant that answers questions about video content.
-You have access to transcribed segments from a video with their timestamps.
+        system_prompt = """You are an expert knowledge transfer assistant helping developers learn from training videos.
 
-Instructions:
-- Answer questions based ONLY on the provided transcript segments
-- When referencing specific moments, mention the timestamp naturally in your response
-- If the answer is not in the provided context, say so honestly
-- Be conversational and helpful
-- If asked for follow-up questions, use the conversation history to maintain context
+Your role:
+- Answer questions naturally and conversationally as if you watched the video yourself
+- Use timestamps like [MM:SS] when referencing specific moments (e.g., "at [01:30], they explain...")
+- Be direct and concise - don't say phrases like "based on the transcript" or "according to the video"
+- Speak as if you're explaining the content directly
+- If information isn't available in what you know about the video, say "I don't see that covered in this video"
+- For technical topics, be precise and include key details
+
+Here's what's covered in the video:
+{context_text}
 """
 
-        user_prompt = f"""Video Transcript Context:
-{context_text}
+        user_prompt = f"""Question: {query}
 
-Question: {query}
-
-Please provide a detailed answer based on the video transcript above. Include relevant timestamps when referencing specific parts."""
+Answer naturally and include timestamps [MM:SS] when referencing specific moments."""
 
         try:
             # Include conversation history if available

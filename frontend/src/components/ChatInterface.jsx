@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 import './ChatInterface.css'
 
 function ChatInterface({ videoId, onTimestampClick }) {
@@ -115,11 +116,17 @@ function ChatInterface({ videoId, onTimestampClick }) {
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.role}`}>
             <div className="message-content">
-              <div className="message-text">{message.content}</div>
+              <div className="message-text">
+                {message.role === 'assistant' ? (
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                ) : (
+                  message.content
+                )}
+              </div>
 
               {message.timestamps && message.timestamps.length > 0 && (
                 <div className="timestamps-section">
-                  <p className="timestamps-label">Relevant moments:</p>
+                  <p className="timestamps-label">📍 Jump to relevant moments:</p>
                   {message.timestamps.map((ts, idx) => (
                     <div
                       key={idx}
@@ -127,7 +134,7 @@ function ChatInterface({ videoId, onTimestampClick }) {
                       onClick={() => onTimestampClick(ts.start_time)}
                       title={ts.text}
                     >
-                      <span className="timestamp-icon">⏱️</span>
+                      <span className="timestamp-icon">🎬</span>
                       <span className="timestamp-time">{formatTime(ts.start_time)}</span>
                       <span className="timestamp-preview">{ts.text}</span>
                     </div>

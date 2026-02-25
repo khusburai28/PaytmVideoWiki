@@ -1,27 +1,33 @@
 import { useRef, useEffect } from 'react'
+import ReactPlayer from 'react-player'
 import './VideoPlayer.css'
 
 function VideoPlayer({ videoId, seekTime }) {
-  const videoRef = useRef(null)
+  const playerRef = useRef(null)
 
   useEffect(() => {
-    if (videoRef.current && seekTime !== undefined) {
-      videoRef.current.currentTime = seekTime
-      videoRef.current.play()
+    if (playerRef.current && seekTime !== undefined && seekTime !== null) {
+      playerRef.current.seekTo(seekTime, 'seconds')
     }
   }, [seekTime])
 
   return (
     <div className="video-player-container">
-      <video
-        ref={videoRef}
-        className="video-player"
+      <ReactPlayer
+        ref={playerRef}
+        url={`/api/video/${videoId}`}
         controls
-        controlsList="nodownload"
-      >
-        <source src={`/api/video/${videoId}`} type="video/mp4" />
-        Your browser does not support the video tag.
-      </video>
+        width="100%"
+        height="100%"
+        playing={seekTime !== undefined && seekTime !== null}
+        config={{
+          file: {
+            attributes: {
+              controlsList: 'nodownload'
+            }
+          }
+        }}
+      />
     </div>
   )
 }

@@ -200,7 +200,7 @@ async def upload_video(
 @app.get("/api/status/{video_id}", response_model=VideoProcessingStatus)
 async def get_processing_status(video_id: str):
     """Get processing status for a video."""
-    # Check processor status first
+    # Check processor status first (for videos currently being processed)
     status = video_processor.get_status(video_id)
 
     if status:
@@ -212,15 +212,15 @@ async def get_processing_status(video_id: str):
             total_segments=status.get('total_segments')
         )
 
-    # Check metadata
-    if video_id in video_metadata:
-        meta = video_metadata[video_id]
+    # Check if video is indexed in Qdrant (completed videos)
+    segment_count = rag_engine.get_video_segment_count(video_id)
+    if segment_count > 0:
         return VideoProcessingStatus(
             video_id=video_id,
-            status=meta.get('status', 'unknown'),
-            progress=100 if meta.get('status') == 'completed' else 0,
-            message=meta.get('error'),
-            total_segments=meta.get('total_segments')
+            status='completed',
+            progress=100,
+            message=None,
+            total_segments=segment_count
         )
 
     raise HTTPException(status_code=404, detail="Video not found")
@@ -230,16 +230,10 @@ async def get_processing_status(video_id: str):
 async def chat(request: ChatRequest):
     """Chat with the video content."""
     try:
-        # Check if video exists and is processed
-        if request.video_id not in video_metadata:
-            raise HTTPException(status_code=404, detail="Video not found")
-
-        meta = video_metadata[request.video_id]
-        if meta['status'] != 'completed':
-            raise HTTPException(
-                status_code=400,
-                detail=f"Video is not ready. Status: {meta['status']}"
-            )
+        # Check if video exists in Qdrant
+        segment_count = rag_engine.get_video_segment_count(request.video_id)
+        if segment_count == 0:
+            raise HTTPException(status_code=404, detail="Video not found or not indexed")
 
         # Search for relevant segments
         relevant_segments = rag_engine.search_segments(
