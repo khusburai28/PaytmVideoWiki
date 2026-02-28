@@ -497,12 +497,13 @@
 }
 
 .ai-panel-header {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
+  flex-shrink: 0;
 }
 
 .ai-panel-header h3 {
