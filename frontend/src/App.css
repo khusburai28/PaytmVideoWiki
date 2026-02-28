@@ -225,6 +225,41 @@
   background: var(--bg-primary);
   display: flex;
   justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.generate-report-btn {
+  padding: 0.65rem 1.25rem;
+  background: var(--paytm-blue);
+  border: 1px solid var(--paytm-blue);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.generate-report-btn:hover {
+  background: var(--paytm-dark-blue);
+  border-color: var(--paytm-dark-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
+}
+
+.generate-report-btn:active {
+  transform: translateY(0);
+}
+
+.generate-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #999;
+  border-color: #999;
+  transform: none;
 }
 
 .delete-video-btn {
@@ -251,6 +286,12 @@
 
 .delete-video-btn:active {
   transform: translateY(0);
+}
+
+.delete-video-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .chat-section {

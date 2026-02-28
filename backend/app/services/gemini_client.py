@@ -110,3 +110,15 @@ Answer concisely using the video content. Keep it brief and natural."""
             })
 
         return referenced_segments[:3]  # Return top 3 most relevant
+
+    def generate_content(self, prompt: str) -> str:
+        """Generate content using Gemini for report generation."""
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            logger.error(f"Gemini API error: {e}")
+            raise Exception(f"Failed to generate content: {str(e)}")

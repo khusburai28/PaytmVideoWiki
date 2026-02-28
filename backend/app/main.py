@@ -9,6 +9,7 @@ import os
 import ffmpeg
 from pathlib import Path
 from datetime import datetime
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 from app.models.schemas import (
     VideoUploadRequest,
@@ -23,6 +24,7 @@ from app.models.schemas import (
 from app.services.video_processor import VideoProcessor
 from app.services.rag_engine import RAGEngine
 from app.services.gemini_client import GeminiClient
+from app.services.report_generator import ReportGenerator
 
 # Configure logging
 logging.basicConfig(
@@ -91,6 +93,7 @@ try:
         api_key=settings.gemini_api_key,
         model_name=settings.gemini_model
     )
+    report_generator = ReportGenerator(gemini_client=gemini_client)
     logger.info("All services initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize services: {e}")
@@ -404,6 +407,85 @@ async def list_videos():
     except Exception as e:
         logger.error(f"Failed to list videos: {e}")
         return []
+
+
+@app.post("/api/video/{video_id}/report")
+async def generate_report(video_id: str):
+    """Generate a comprehensive PDF report for the video."""
+    try:
+        # Get video metadata
+        metadata = rag_engine.get_video_metadata(video_id)
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Video not found")
+
+        # Get all segments for the video
+        logger.info(f"Retrieving all segments for video {video_id}")
+        all_segments = []
+        offset = None
+
+        while True:
+            records, offset = rag_engine.qdrant_client.scroll(
+                collection_name=rag_engine.collection_name,
+                scroll_filter=Filter(
+                    must=[
+                        FieldCondition(
+                            key="video_id",
+                            match=MatchValue(value=video_id)
+                        ),
+                        FieldCondition(
+                            key="chunk_type",
+                            match=MatchValue(value="regular")
+                        )
+                    ]
+                ),
+                limit=100,
+                with_payload=True,
+                with_vectors=False
+            )
+
+            for record in records:
+                all_segments.append({
+                    'text': record.payload['text'],
+                    'start_time': record.payload['start_time'],
+                    'end_time': record.payload['end_time'],
+                    'segment_index': record.payload.get('segment_index', 0)
+                })
+
+            if offset is None:
+                break
+
+        # Sort segments by time
+        all_segments.sort(key=lambda x: x['start_time'])
+        logger.info(f"Retrieved {len(all_segments)} segments")
+
+        # Generate report content
+        report_markdown = report_generator.generate_report_content(
+            video_name=metadata.get('name', 'Untitled Video'),
+            description=metadata.get('description', ''),
+            duration=metadata.get('duration', 0),
+            segments=all_segments
+        )
+
+        # Convert to PDF
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            pdf_path = tmp_file.name
+
+        report_generator.markdown_to_pdf(report_markdown, pdf_path)
+
+        # Return PDF file
+        return FileResponse(
+            pdf_path,
+            media_type='application/pdf',
+            filename=f"{metadata.get('name', 'video')}_report.pdf",
+            background=BackgroundTasks().add_task(lambda: os.remove(pdf_path) if os.path.exists(pdf_path) else None)
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate report: {e}")
+        raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
 
 @app.delete("/api/video/{video_id}")

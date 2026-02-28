@@ -19,3 +19,7 @@ google-genai
 # Utilities
 aiofiles==23.2.1
 python-json-logger==2.0.7
+
+# Report Generation
+markdown==3.5.1
+weasyprint>=62.0

@@ -4,12 +4,14 @@ import ChatInterface from './components/ChatInterface'
 import UploadVideo from './components/UploadVideo'
 import VideoSidebar from './components/VideoSidebar'
 import DeleteIcon from '@mui/icons-material/Delete'
+import DescriptionIcon from '@mui/icons-material/Description'
 import './App.css'
 
 function App() {
   const [currentVideo, setCurrentVideo] = useState(null)
   const [videoTime, setVideoTime] = useState(0)
   const [videos, setVideos] = useState([])
+  const [generatingReport, setGeneratingReport] = useState(false)
 
   const handleVideoUploaded = (videoInfo) => {
     setCurrentVideo(videoInfo)
@@ -22,6 +24,39 @@ function App() {
 
   const handleVideoSelect = (video) => {
     setCurrentVideo(video)
+  }
+
+  const handleGenerateReport = async (videoId) => {
+    setGeneratingReport(true)
+    try {
+      const response = await fetch(`/api/video/${videoId}/report`, {
+        method: 'POST'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report')
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob()
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${currentVideo.name || 'video'}_report.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      alert('Report generated successfully!')
+    } catch (error) {
+      console.error('Failed to generate report:', error)
+      alert('Failed to generate report. Please try again.')
+    } finally {
+      setGeneratingReport(false)
+    }
   }
 
   const handleDeleteVideo = async (videoId) => {
@@ -115,8 +150,17 @@ function App() {
                 />
                 <div className="video-actions">
                   <button
+                    className="generate-report-btn"
+                    onClick={() => handleGenerateReport(currentVideo.video_id)}
+                    disabled={generatingReport}
+                  >
+                    <DescriptionIcon sx={{ fontSize: '1.1rem' }} />
+                    {generatingReport ? 'Generating...' : 'Generate Report'}
+                  </button>
+                  <button
                     className="delete-video-btn"
                     onClick={() => handleDeleteVideo(currentVideo.video_id)}
+                    disabled={generatingReport}
                   >
                     <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                     Delete Video

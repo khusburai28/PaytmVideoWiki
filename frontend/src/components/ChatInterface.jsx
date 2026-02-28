@@ -2,8 +2,6 @@ import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import WavingHandIcon from '@mui/icons-material/WavingHand'
-import LocationOnIcon from '@mui/icons-material/LocationOn'
-import MovieIcon from '@mui/icons-material/Movie'
 import SendIcon from '@mui/icons-material/Send'
 import './ChatInterface.css'
 
@@ -193,29 +191,6 @@ function ChatInterface({ videoId, onTimestampClick }) {
                   message.content
                 )}
               </div>
-
-              {message.timestamps && message.timestamps.length > 0 && (
-                <div className="timestamps-section">
-                  <p className="timestamps-label">
-                    <LocationOnIcon sx={{ fontSize: '0.95rem', verticalAlign: 'middle', marginRight: '0.3rem' }} />
-                    Jump to relevant moments:
-                  </p>
-                  {message.timestamps.map((ts, idx) => (
-                    <div
-                      key={idx}
-                      className="timestamp-chip"
-                      onClick={() => onTimestampClick(ts.start_time)}
-                      title={ts.text}
-                    >
-                      <span className="timestamp-icon">
-                        <MovieIcon sx={{ fontSize: '1.1rem' }} />
-                      </span>
-                      <span className="timestamp-time">{formatTime(ts.start_time)}</span>
-                      <span className="timestamp-preview">{ts.text}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         ))}
