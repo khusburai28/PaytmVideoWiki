@@ -20,9 +20,9 @@ def get_dependencies():
     """Get service dependencies from main app."""
     from app.main import (
         settings, video_processor, rag_engine, gemini_client,
-        report_generator, video_metadata, process_video_task
+        report_generator, video_metadata, process_video_task, auth_service
     )
-    return settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task
+    return settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service
 
 
 @router.post("/upload", response_model=VideoUploadResponse)
@@ -34,7 +34,7 @@ async def upload_video(
     current_user: dict = Depends(get_current_active_user)
 ):
     """Upload a video file for processing (Authenticated users only)."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         # Validate file type
@@ -100,7 +100,7 @@ async def upload_video(
 @router.get("/status/{video_id}", response_model=VideoProcessingStatus)
 async def get_processing_status(video_id: str):
     """Get processing status for a video."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     # Check processor status first (for videos currently being processed)
     status = video_processor.get_status(video_id)
@@ -131,7 +131,7 @@ async def get_processing_status(video_id: str):
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_video(request: ChatRequest):
     """Chat with AI about video content."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         # Search for relevant segments
@@ -180,7 +180,7 @@ async def chat_with_video(request: ChatRequest):
 @router.get("/video/{video_id}")
 async def get_video(video_id: str, request: Request):
     """Stream video file with range request support."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         video_path = video_processor.upload_dir / f"{video_id}.mp4"
@@ -245,13 +245,24 @@ async def get_video(video_id: str, request: Request):
 @router.get("/videos", response_model=list[VideoInfo])
 async def list_videos():
     """Get list of all processed videos."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         videos = []
         metadata_list = rag_engine.list_all_video_metadata()
 
         for metadata in metadata_list:
+            # Get author name
+            author_name = None
+            author_id = metadata.get('author_id')
+            if author_id:
+                try:
+                    user = auth_service.get_user_by_id(author_id)
+                    if user:
+                        author_name = user.get('full_name')
+                except Exception as e:
+                    logger.warning(f"Failed to fetch author name for user {author_id}: {e}")
+
             videos.append(VideoInfo(
                 video_id=metadata['video_id'],
                 filename=metadata.get('filename', ''),
@@ -260,7 +271,8 @@ async def list_videos():
                 upload_date=datetime.fromisoformat(metadata['upload_date']) if 'upload_date' in metadata else datetime.now(),
                 total_segments=metadata.get('total_segments', 0),
                 duration=metadata.get('duration', 0),
-                status='completed'
+                status='completed',
+                author_name=author_name
             ))
 
         return sorted(videos, key=lambda x: x.upload_date, reverse=True)
@@ -273,7 +285,7 @@ async def list_videos():
 @router.post("/video/{video_id}/report")
 async def generate_video_report(video_id: str):
     """Generate PDF report for a video."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         # Get video metadata
@@ -331,7 +343,7 @@ async def generate_video_report(video_id: str):
 @router.delete("/video/{video_id}")
 async def delete_video(video_id: str, current_user: dict = Depends(get_current_active_user)):
     """Delete a video and its data (Author, Team Lead, or Admin only)."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task = get_dependencies()
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
         # Get video metadata to check permissions

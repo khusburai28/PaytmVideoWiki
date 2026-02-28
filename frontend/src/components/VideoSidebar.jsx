@@ -4,6 +4,7 @@ import OndemandVideoIcon from '@mui/icons-material/OndemandVideo'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import PersonIcon from '@mui/icons-material/Person'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import './VideoSidebar.css'
@@ -82,6 +83,14 @@ function VideoSidebar({ videos, currentVideo, onVideoSelect }) {
                     {video.description || 'No description'}
                   </p>
                   <div className="sidebar-video-meta">
+                    {video.author_name && (
+                      <div className="sidebar-meta-item">
+                        <span className="meta-icon">
+                          <PersonIcon sx={{ fontSize: '0.9rem' }} />
+                        </span>
+                        <span>{video.author_name}</span>
+                      </div>
+                    )}
                     <div className="sidebar-meta-item">
                       <span className="meta-icon">
                         <AccessTimeIcon sx={{ fontSize: '0.9rem' }} />

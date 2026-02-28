@@ -10,6 +10,8 @@ import DescriptionIcon from '@mui/icons-material/Description'
 import LogoutIcon from '@mui/icons-material/Logout'
 import GroupsIcon from '@mui/icons-material/Groups'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
+import PersonIcon from '@mui/icons-material/Person'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
@@ -33,6 +35,14 @@ function App() {
 
   const handleVideoSelect = (video) => {
     setCurrentVideo(video)
+  }
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    })
   }
 
   const handleGenerateReport = async (videoId) => {
@@ -127,8 +137,24 @@ function App() {
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
+
+      // Refresh user data from server to get latest info (including team_name)
+      refreshUserData(storedToken)
     }
   }, [])
+
+  const refreshUserData = async (token) => {
+    try {
+      const response = await apiGet('/api/auth/me')
+      if (response.ok) {
+        const userData = await response.json()
+        setUser(userData)
+        localStorage.setItem('user', JSON.stringify(userData))
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error)
+    }
+  }
 
   useEffect(() => {
     if (token) {
@@ -218,11 +244,6 @@ function App() {
                         <h3 className="video-header-title">
                           {currentVideo.name || currentVideo.filename}
                         </h3>
-                        {currentVideo.description && (
-                          <p className="video-header-description">
-                            {currentVideo.description}
-                          </p>
-                        )}
                       </div>
                     </div>
                     <VideoPlayer
@@ -246,6 +267,26 @@ function App() {
                         <DeleteIcon sx={{ fontSize: '1.1rem' }} />
                         Delete Video
                       </button>
+                    </div>
+                    <div className="video-details-section">
+                      <h4 className="video-details-heading">Description</h4>
+                      <p className="video-details-description">
+                        {currentVideo.description || 'No description available'}
+                      </p>
+                      <div className="video-metadata">
+                        {currentVideo.author_name && (
+                          <div className="video-meta-item">
+                            <PersonIcon sx={{ fontSize: '1rem' }} />
+                            <span className="meta-label">Author:</span>
+                            <span className="meta-value">{currentVideo.author_name}</span>
+                          </div>
+                        )}
+                        <div className="video-meta-item">
+                          <CalendarTodayIcon sx={{ fontSize: '1rem' }} />
+                          <span className="meta-label">Uploaded:</span>
+                          <span className="meta-value">{formatDate(currentVideo.upload_date)}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

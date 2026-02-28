@@ -406,6 +406,53 @@
   transform: none;
 }
 
+.video-details-section {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.video-details-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.75rem 0;
+}
+
+.video-details-description {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 1.25rem 0;
+}
+
+.video-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.video-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.video-meta-item .MuiSvgIcon-root {
+  color: var(--paytm-blue);
+}
+
+.video-meta-item .meta-label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.video-meta-item .meta-value {
+  color: var(--text-secondary);
+}
+
 .chat-section {
   background: var(--bg-primary);
   border-radius: 12px;

@@ -64,6 +64,7 @@ class VideoInfo(BaseModel):
     upload_date: datetime
     status: str
     total_segments: Optional[int] = None
+    author_name: Optional[str] = None
 
 
 class ErrorResponse(BaseModel):
