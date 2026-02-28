@@ -112,6 +112,16 @@ npm install
 npm run dev
 ```
 
+## If any changes are made then we can rebuild using
+
+```
+# If changes made to frontend
+docker-compose up -d --build frontend
+
+# If changes made to backend
+docker-compose up -d --build backend
+```
+
 ## Configuration
 
 Edit `.env` file:

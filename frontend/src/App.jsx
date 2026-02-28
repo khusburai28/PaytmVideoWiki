@@ -72,8 +72,8 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-logo">
-            <img src="/logo.svg" alt="Paytm Logo" className="paytm-logo-img" />
-            <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div>
+            {/* <img src="/logo.svg" alt="Paytm Logo" className="paytm-logo-img" />
+            <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div> */}
             <div>
               <h1>Knowledge Transfer Hub</h1>
               <p>Your onboarding & learning companion</p>
@@ -135,9 +135,9 @@ function App() {
         </div>
       </div>
 
-      <footer className="paytm-footer">
+      {/* <footer className="paytm-footer">
         <div className="footer-stripe"></div>
-      </footer>
+      </footer> */}
     </div>
   )
 }
