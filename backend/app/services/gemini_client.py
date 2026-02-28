@@ -53,7 +53,7 @@ Answer concisely using the video content. Keep it brief and natural."""
             # Build full prompt with conversation history if available
             if conversation_history and len(conversation_history) > 0:
                 history_text = "\n".join([
-                    f"{msg['role'].capitalize()}: {msg['content']}"
+                    f"{msg.role.capitalize()}: {msg.content}"
                     for msg in conversation_history[-6:]  # Last 3 exchanges
                 ])
                 full_prompt = f"{system_prompt}\n\nPrevious Conversation:\n{history_text}\n\n{user_prompt}"

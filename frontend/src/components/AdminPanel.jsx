@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import GroupAddIcon from '@mui/icons-material/GroupAdd'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import CloseIcon from '@mui/icons-material/Close'
-import { apiGet, apiPost } from '../utils/api'
+import { apiGet, apiPost, apiPut } from '../utils/api'
 import './AdminPanel.css'
 
 function AdminPanel({ user }) {
@@ -84,8 +84,8 @@ function AdminPanel({ user }) {
     setLoading(true)
 
     try {
-      const response = await apiPost(
-        `/api/teams/${selectedTeam.team_id}/members`,
+      const response = await apiPut(
+        `/api/teams/${selectedTeam.team_id}/assign`,
         memberForm
       )
 

@@ -89,10 +89,23 @@
   color: white;
 }
 
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
 .user-name {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.user-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .user-role {
@@ -104,6 +117,20 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.user-team {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .logout-btn {

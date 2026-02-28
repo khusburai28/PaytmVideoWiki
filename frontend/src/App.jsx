@@ -172,8 +172,18 @@ function App() {
                 </button>
               </div>
             )}
-            <span className="user-name">{user.full_name}</span>
-            <span className="user-role">{user.role}</span>
+            <div className="user-details">
+              <span className="user-name">{user.full_name}</span>
+              <div className="user-badges">
+                <span className="user-role">{user.role}</span>
+                {user.team_name && (
+                  <span className="user-team">
+                    <GroupsIcon sx={{ fontSize: '0.875rem' }} />
+                    {user.team_name}
+                  </span>
+                )}
+              </div>
+            </div>
             <button className="logout-btn" onClick={handleLogout}>
               <LogoutIcon sx={{ fontSize: '1.1rem' }} />
               Logout
