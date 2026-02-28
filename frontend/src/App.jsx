@@ -5,6 +5,7 @@ import UploadVideo from './components/UploadVideo'
 import VideoSidebar from './components/VideoSidebar'
 import Login from './components/Login'
 import AdminPanel from './components/AdminPanel'
+import ReportModal from './components/ReportModal'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DescriptionIcon from '@mui/icons-material/Description'
 import LogoutIcon from '@mui/icons-material/Logout'
@@ -26,6 +27,7 @@ function App() {
   const [token, setToken] = useState(null)
   const [currentView, setCurrentView] = useState('videos') // 'videos' or 'admin'
   const [showAIPanel, setShowAIPanel] = useState(false) // AI chat panel visibility
+  const [showReportModal, setShowReportModal] = useState(false) // Report modal visibility
 
   const handleVideoUploaded = (videoInfo) => {
     setCurrentVideo(videoInfo)
@@ -48,10 +50,17 @@ function App() {
     })
   }
 
-  const handleGenerateReport = async (videoId) => {
+  const handleGenerateReport = async (additionalInstructions) => {
     setGeneratingReport(true)
     try {
-      const response = await apiPost(`/api/video/${videoId}/report`)
+      const body = additionalInstructions
+        ? { additional_instructions: additionalInstructions }
+        : {}
+
+      const response = await apiPost(
+        `/api/video/${currentVideo.video_id}/report`,
+        body
+      )
 
       if (!response.ok) {
         throw new Error('Failed to generate report')
@@ -70,6 +79,7 @@ function App() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
 
+      setShowReportModal(false)
       alert('Report generated successfully!')
     } catch (error) {
       console.error('Failed to generate report:', error)
@@ -265,11 +275,11 @@ function App() {
                       )}
                       <button
                         className="generate-report-btn"
-                        onClick={() => handleGenerateReport(currentVideo.video_id)}
+                        onClick={() => setShowReportModal(true)}
                         disabled={generatingReport}
                       >
                         <DescriptionIcon sx={{ fontSize: '1.1rem' }} />
-                        {generatingReport ? 'Generating...' : 'Generate Report'}
+                        Generate Report
                       </button>
                       <button
                         className="delete-video-btn"
@@ -334,6 +344,17 @@ function App() {
       {/* <footer className="paytm-footer">
         <div className="footer-stripe"></div>
       </footer> */}
+
+      {/* Report Generation Modal */}
+      {currentVideo && (
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          onGenerate={handleGenerateReport}
+          videoName={currentVideo.name || currentVideo.filename}
+          isGenerating={generatingReport}
+        />
+      )}
     </div>
   )
 }

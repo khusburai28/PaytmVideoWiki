@@ -67,6 +67,10 @@ class VideoInfo(BaseModel):
     author_name: Optional[str] = None
 
 
+class ReportGenerationRequest(BaseModel):
+    additional_instructions: Optional[str] = None
+
+
 class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None

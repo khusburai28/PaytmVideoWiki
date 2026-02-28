@@ -18,7 +18,8 @@ class ReportGenerator:
         video_name: str,
         description: str,
         duration: float,
-        segments: List[Dict]
+        segments: List[Dict],
+        additional_instructions: str = None
     ) -> str:
         """Generate structured markdown report using AI."""
 
@@ -28,8 +29,32 @@ class ReportGenerator:
             for seg in segments
         ])
 
+        # Build the instruction section
+        instruction_header = ""
+        if additional_instructions:
+            instruction_header = f"""
+
+========================================
+CRITICAL: USER'S ADDITIONAL INSTRUCTIONS
+========================================
+
+The user has explicitly provided the following ADDITIONAL INSTRUCTIONS that MUST take priority and be incorporated throughout the entire report:
+
+--- START OF USER'S ADDITIONAL INSTRUCTIONS ---
+{additional_instructions}
+--- END OF USER'S ADDITIONAL INSTRUCTIONS ---
+
+IMPORTANT: These are the user's specific requirements. They are MANDATORY and should significantly influence:
+- The report's focus and emphasis
+- The structure and organization
+- The level of detail in relevant sections
+- The technical depth and coverage
+
+Ensure EVERY section of the report addresses these user instructions where applicable."""
+
         # Create AI prompt for report generation
         prompt = f"""You are a technical documentation expert. Generate a comprehensive, well-structured technical report based on the following video transcript.
+{instruction_header}
 
 Video Title: {video_name}
 Description: {description}
@@ -286,7 +311,8 @@ Important:
         video_name: str,
         video_description: str,
         duration: float,
-        segments: List[Dict]
+        segments: List[Dict],
+        additional_instructions: str = None
     ) -> str:
         """Generate complete PDF report and return path."""
         # Generate markdown content
@@ -294,7 +320,8 @@ Important:
             video_name=video_name,
             description=video_description,
             duration=duration,
-            segments=segments
+            segments=segments,
+            additional_instructions=additional_instructions
         )
 
         # Create output directory

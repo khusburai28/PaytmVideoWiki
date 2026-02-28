@@ -7,7 +7,7 @@ import logging
 
 from app.models.schemas import (
     VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
-    VideoInfo, TimestampReference
+    VideoInfo, TimestampReference, ReportGenerationRequest
 )
 from app.middleware.auth import get_current_active_user, check_video_permission
 
@@ -138,7 +138,7 @@ async def chat_with_video(request: ChatRequest):
         relevant_segments = rag_engine.search_segments(
             video_id=request.video_id,
             query=request.message,
-            top_k=5
+            top_k=15
         )
 
         if not relevant_segments:
@@ -283,8 +283,11 @@ async def list_videos():
 
 
 @router.post("/video/{video_id}/report")
-async def generate_video_report(video_id: str):
-    """Generate PDF report for a video."""
+async def generate_video_report(
+    video_id: str,
+    request: ReportGenerationRequest = ReportGenerationRequest()
+):
+    """Generate PDF report for a video with optional additional instructions."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
@@ -310,13 +313,14 @@ async def generate_video_report(video_id: str):
         segments = [r.payload for r in results[0]]
         segments.sort(key=lambda x: x['start_time'])
 
-        # Generate report
+        # Generate report with optional additional instructions
         report_path = await report_generator.generate_report(
             video_id=video_id,
             video_name=metadata.get('name', metadata.get('filename', 'Untitled')),
             video_description=metadata.get('description', ''),
             duration=metadata.get('duration', 0),
-            segments=segments
+            segments=segments,
+            additional_instructions=request.additional_instructions
         )
 
         # Return PDF file
