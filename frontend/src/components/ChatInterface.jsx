@@ -44,7 +44,27 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
     return 0
   }
 
-  const renderMessageWithClickableTimestamps = (text) => {
+  const renderMessageWithClickableTimestamps = (content) => {
+    // Handle different types of content
+    if (!content) return ''
+
+    // Convert to string if it's not already
+    let text = content
+    if (typeof content !== 'string') {
+      // If it's an array, join the text content
+      if (Array.isArray(content)) {
+        text = content.map(item => {
+          if (typeof item === 'string') return item
+          if (item?.props?.children) return String(item.props.children)
+          return ''
+        }).join('')
+      } else if (content?.props?.children) {
+        text = String(content.props.children)
+      } else {
+        text = String(content)
+      }
+    }
+
     // Replace [MM:SS] or [HH:MM:SS] patterns with clickable timestamps
     const timestampRegex = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g
     const parts = []
@@ -178,8 +198,10 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
                   <ReactMarkdown
                     components={{
                       // Custom text renderer to make timestamps clickable
-                      p: ({ children }) => <p>{renderMessageWithClickableTimestamps(String(children))}</p>,
-                      li: ({ children }) => <li>{renderMessageWithClickableTimestamps(String(children))}</li>,
+                      p: ({ children }) => <p>{renderMessageWithClickableTimestamps(children)}</p>,
+                      li: ({ children }) => <li>{renderMessageWithClickableTimestamps(children)}</li>,
+                      // Handle other text elements
+                      text: ({ children }) => renderMessageWithClickableTimestamps(children),
                     }}
                   >
                     {message.content}
