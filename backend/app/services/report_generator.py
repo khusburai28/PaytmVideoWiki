@@ -280,6 +280,35 @@ Important:
             logger.error(traceback.format_exc())
             raise
 
+    async def generate_report(
+        self,
+        video_id: str,
+        video_name: str,
+        video_description: str,
+        duration: float,
+        segments: List[Dict]
+    ) -> str:
+        """Generate complete PDF report and return path."""
+        # Generate markdown content
+        markdown_content = self.generate_report_content(
+            video_name=video_name,
+            description=video_description,
+            duration=duration,
+            segments=segments
+        )
+
+        # Create output directory
+        output_dir = Path("./temp")
+        output_dir.mkdir(exist_ok=True)
+
+        # Generate output path
+        output_path = output_dir / f"{video_id}_report.pdf"
+
+        # Convert to PDF
+        self.markdown_to_pdf(markdown_content, str(output_path))
+
+        return str(output_path)
+
     def _format_time(self, seconds: float) -> str:
         """Format seconds to HH:MM:SS or MM:SS."""
         hours = int(seconds // 3600)
