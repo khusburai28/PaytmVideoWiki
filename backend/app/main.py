@@ -1,6 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings
 from typing import Optional
@@ -312,8 +312,8 @@ async def chat(request: ChatRequest):
 
 
 @app.get("/api/video/{video_id}")
-async def get_video(video_id: str):
-    """Serve video file."""
+async def get_video(video_id: str, request: Request):
+    """Serve video file with range request support."""
     # Find video file by video_id
     upload_dir = Path(settings.upload_dir)
     video_file = None
@@ -327,10 +327,54 @@ async def get_video(video_id: str):
     if not video_file:
         raise HTTPException(status_code=404, detail="Video file not found")
 
-    return FileResponse(
-        str(video_file),
-        media_type="video/mp4",
-        filename=video_file.name
+    # Get file size
+    file_size = os.path.getsize(video_file)
+
+    # Get range header
+    range_header = request.headers.get('Range')
+
+    if not range_header:
+        # No range requested, return full file
+        return FileResponse(
+            str(video_file),
+            media_type="video/mp4",
+            filename=video_file.name
+        )
+
+    # Parse range header
+    byte_range = range_header.replace('bytes=', '').split('-')
+    start = int(byte_range[0]) if byte_range[0] else 0
+    end = int(byte_range[1]) if len(byte_range) > 1 and byte_range[1] else file_size - 1
+
+    # Ensure valid range
+    if start >= file_size or end >= file_size:
+        raise HTTPException(status_code=416, detail="Range not satisfiable")
+
+    chunk_size = end - start + 1
+
+    # Read and stream the requested byte range
+    def iterfile():
+        with open(video_file, 'rb') as f:
+            f.seek(start)
+            remaining = chunk_size
+            while remaining > 0:
+                chunk = f.read(min(8192, remaining))
+                if not chunk:
+                    break
+                remaining -= len(chunk)
+                yield chunk
+
+    headers = {
+        'Content-Range': f'bytes {start}-{end}/{file_size}',
+        'Accept-Ranges': 'bytes',
+        'Content-Length': str(chunk_size),
+        'Content-Type': 'video/mp4',
+    }
+
+    return StreamingResponse(
+        iterfile(),
+        status_code=206,
+        headers=headers
     )
 
 

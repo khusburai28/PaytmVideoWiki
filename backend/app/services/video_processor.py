@@ -64,38 +64,62 @@ class VideoProcessor:
             logger.error(f"Failed to get video duration: {e}")
             return 0.0
 
-    def merge_small_segments(self, segments: List[Dict], min_duration: float = 15.0) -> List[Dict]:
-        """Merge small segments to create larger, more meaningful chunks."""
+    def merge_small_segments(self, segments: List[Dict], min_duration: float = 30.0) -> List[Dict]:
+        """Merge small segments to create larger, more meaningful chunks with inline timestamps."""
         if not segments:
             return []
 
+        def format_timestamp(seconds: float) -> str:
+            """Format seconds to MM:SS or HH:MM:SS."""
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            secs = int(seconds % 60)
+            if hours > 0:
+                return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+            return f"{minutes:02d}:{secs:02d}"
+
         merged = []
-        current_chunk = {
-            "text": segments[0]['text'],
-            "start_time": segments[0]['start_time'],
-            "end_time": segments[0]['end_time'],
-            "confidence": segments[0].get('confidence', 0.0)
-        }
+        current_segments = [segments[0]]  # Track individual segments within chunk
 
         for segment in segments[1:]:
-            chunk_duration = current_chunk['end_time'] - current_chunk['start_time']
+            chunk_start = current_segments[0]['start_time']
+            chunk_end = current_segments[-1]['end_time']
+            chunk_duration = chunk_end - chunk_start
+            chunk_text_length = sum(len(s['text']) for s in current_segments)
 
             # Merge if current chunk is too short or text is too brief
-            if chunk_duration < min_duration or len(current_chunk['text']) < 100:
-                current_chunk['text'] += " " + segment['text']
-                current_chunk['end_time'] = segment['end_time']
-                current_chunk['confidence'] = (current_chunk['confidence'] + segment.get('confidence', 0.0)) / 2
+            if chunk_duration < min_duration or chunk_text_length < 100:
+                current_segments.append(segment)
             else:
-                merged.append(current_chunk)
-                current_chunk = {
-                    "text": segment['text'],
-                    "start_time": segment['start_time'],
-                    "end_time": segment['end_time'],
-                    "confidence": segment.get('confidence', 0.0)
-                }
+                # Finalize current chunk with inline timestamps
+                chunk_text_parts = []
+                for seg in current_segments:
+                    timestamp = format_timestamp(seg['start_time'])
+                    chunk_text_parts.append(f"[{timestamp}] {seg['text']}")
 
-        # Add the last chunk
-        merged.append(current_chunk)
+                merged.append({
+                    "text": " ".join(chunk_text_parts),
+                    "start_time": current_segments[0]['start_time'],
+                    "end_time": current_segments[-1]['end_time'],
+                    "confidence": sum(s.get('confidence', 0.0) for s in current_segments) / len(current_segments)
+                })
+
+                # Start new chunk
+                current_segments = [segment]
+
+        # Add the last chunk with inline timestamps
+        if current_segments:
+            chunk_text_parts = []
+            for seg in current_segments:
+                timestamp = format_timestamp(seg['start_time'])
+                chunk_text_parts.append(f"[{timestamp}] {seg['text']}")
+
+            merged.append({
+                "text": " ".join(chunk_text_parts),
+                "start_time": current_segments[0]['start_time'],
+                "end_time": current_segments[-1]['end_time'],
+                "confidence": sum(s.get('confidence', 0.0) for s in current_segments) / len(current_segments)
+            })
 
         logger.info(f"Merged {len(segments)} segments into {len(merged)} chunks (min duration: {min_duration}s)")
         return merged
@@ -126,8 +150,8 @@ class VideoProcessor:
 
             logger.info(f"Transcription complete: {len(segments)} raw segments")
 
-            # Merge small segments into larger chunks (15 seconds minimum)
-            merged_segments = self.merge_small_segments(segments, min_duration=15.0)
+            # Merge small segments into larger chunks (30 seconds minimum)
+            merged_segments = self.merge_small_segments(segments, min_duration=30.0)
 
             # Save transcription to file for backup
             transcript_path = self.temp_dir / f"{video_id}_transcript.json"

@@ -32,6 +32,57 @@ function ChatInterface({ videoId, onTimestampClick }) {
     return `${minutes}:${secs.toString().padStart(2, '0')}`
   }
 
+  const parseTimeToSeconds = (timeStr) => {
+    // Parse formats like "01:26" or "1:26:30"
+    const parts = timeStr.split(':').map(Number)
+    if (parts.length === 2) {
+      // MM:SS
+      return parts[0] * 60 + parts[1]
+    } else if (parts.length === 3) {
+      // HH:MM:SS
+      return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    }
+    return 0
+  }
+
+  const renderMessageWithClickableTimestamps = (text) => {
+    // Replace [MM:SS] or [HH:MM:SS] patterns with clickable timestamps
+    const timestampRegex = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g
+    const parts = []
+    let lastIndex = 0
+    let match
+
+    while ((match = timestampRegex.exec(text)) !== null) {
+      // Add text before the timestamp
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index))
+      }
+
+      // Add clickable timestamp
+      const timeStr = match[1]
+      const seconds = parseTimeToSeconds(timeStr)
+      parts.push(
+        <span
+          key={`ts-${match.index}`}
+          className="inline-timestamp"
+          onClick={() => onTimestampClick(seconds)}
+          title={`Jump to ${timeStr}`}
+        >
+          [{timeStr}]
+        </span>
+      )
+
+      lastIndex = match.index + match[0].length
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex))
+    }
+
+    return parts.length > 0 ? parts : text
+  }
+
   const handleSend = async () => {
     if (!input.trim() || loading) return
 
@@ -129,7 +180,15 @@ function ChatInterface({ videoId, onTimestampClick }) {
             <div className="message-content">
               <div className="message-text">
                 {message.role === 'assistant' ? (
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                  <ReactMarkdown
+                    components={{
+                      // Custom text renderer to make timestamps clickable
+                      p: ({ children }) => <p>{renderMessageWithClickableTimestamps(String(children))}</p>,
+                      li: ({ children }) => <li>{renderMessageWithClickableTimestamps(String(children))}</li>,
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
                 ) : (
                   message.content
                 )}
@@ -182,7 +241,7 @@ function ChatInterface({ videoId, onTimestampClick }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Ask about concepts, setup steps, best practices..."
+          placeholder="Ask a question..."
           rows={1}
           disabled={loading}
         />

@@ -123,6 +123,27 @@
   white-space: pre-wrap;
 }
 
+.inline-timestamp {
+  display: inline-block;
+  background: var(--paytm-sky);
+  color: var(--paytm-dark-blue);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--paytm-blue);
+  margin: 0 0.2rem;
+}
+
+.inline-timestamp:hover {
+  background: var(--paytm-blue);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 186, 242, 0.3);
+}
+
 .timestamps-section {
   margin-top: 1rem;
   padding-top: 1rem;
