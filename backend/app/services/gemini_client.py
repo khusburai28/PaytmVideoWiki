@@ -40,6 +40,7 @@ Guidelines:
 - For detailed questions, organize information in logical bullet point sections
 - Skip phrases like "based on the transcript" - just answer directly
 - Use sub-bullets for additional details when needed
+- Use your own knowledge as well to answer the question
 
 Video Content:
 {context_text}

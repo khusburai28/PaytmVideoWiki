@@ -44,26 +44,43 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
     return 0
   }
 
+  const extractTextContent = (content) => {
+    // Recursively extract all text content from React elements
+    if (!content) return ''
+
+    if (typeof content === 'string') {
+      return content
+    }
+
+    if (Array.isArray(content)) {
+      return content.map(extractTextContent).join('')
+    }
+
+    if (content?.props?.children) {
+      return extractTextContent(content.props.children)
+    }
+
+    return String(content)
+  }
+
   const renderMessageWithClickableTimestamps = (content) => {
     // Handle different types of content
     if (!content) return ''
 
-    // Convert to string if it's not already
-    let text = content
-    if (typeof content !== 'string') {
-      // If it's an array, join the text content
-      if (Array.isArray(content)) {
-        text = content.map(item => {
-          if (typeof item === 'string') return item
-          if (item?.props?.children) return String(item.props.children)
-          return ''
-        }).join('')
-      } else if (content?.props?.children) {
-        text = String(content.props.children)
-      } else {
-        text = String(content)
-      }
+    // If content is a complex React element (like nested lists), render it recursively
+    if (Array.isArray(content)) {
+      return content.map((item, idx) => {
+        if (typeof item === 'string') {
+          return renderMessageWithClickableTimestamps(item)
+        }
+        // For React elements like <ul>, <ol>, etc., return them as-is
+        // They will be processed by ReactMarkdown's component renderers
+        return item
+      })
     }
+
+    // If it's not a string and not an array, try to extract text
+    let text = typeof content === 'string' ? content : extractTextContent(content)
 
     // Replace [MM:SS] or [HH:MM:SS] patterns with clickable timestamps
     const timestampRegex = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g
@@ -199,9 +216,25 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
                     components={{
                       // Custom text renderer to make timestamps clickable
                       p: ({ children }) => <p>{renderMessageWithClickableTimestamps(children)}</p>,
-                      li: ({ children }) => <li>{renderMessageWithClickableTimestamps(children)}</li>,
-                      // Handle other text elements
-                      text: ({ children }) => renderMessageWithClickableTimestamps(children),
+                      li: ({ children }) => {
+                        // For list items, process text content while preserving nested elements
+                        const processContent = (content) => {
+                          if (typeof content === 'string') {
+                            return renderMessageWithClickableTimestamps(content)
+                          }
+                          if (Array.isArray(content)) {
+                            return content.map((item, idx) => {
+                              if (typeof item === 'string') {
+                                return <span key={idx}>{renderMessageWithClickableTimestamps(item)}</span>
+                              }
+                              // Preserve nested elements like <ul>, <ol>
+                              return item
+                            })
+                          }
+                          return content
+                        }
+                        return <li>{processContent(children)}</li>
+                      },
                     }}
                   >
                     {message.content}
