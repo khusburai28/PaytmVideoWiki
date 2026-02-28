@@ -12,6 +12,8 @@ import GroupsIcon from '@mui/icons-material/Groups'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
 import PersonIcon from '@mui/icons-material/Person'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import CloseIcon from '@mui/icons-material/Close'
 import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
@@ -23,6 +25,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [currentView, setCurrentView] = useState('videos') // 'videos' or 'admin'
+  const [showAIPanel, setShowAIPanel] = useState(false) // AI chat panel visibility
 
   const handleVideoUploaded = (videoInfo) => {
     setCurrentVideo(videoInfo)
@@ -237,7 +240,7 @@ function App() {
                   <UploadVideo onVideoUploaded={handleVideoUploaded} />
                 </div>
               ) : (
-                <div className="player-interface">
+                <div className={`player-interface ${!showAIPanel ? 'ai-panel-closed' : ''}`}>
                   <div className="video-section">
                     <div className="video-header">
                       <div className="video-header-info">
@@ -251,6 +254,15 @@ function App() {
                       seekTime={videoTime}
                     />
                     <div className="video-actions">
+                      {!showAIPanel && (
+                        <button
+                          className="ask-ai-btn"
+                          onClick={() => setShowAIPanel(true)}
+                        >
+                          <SmartToyIcon sx={{ fontSize: '1.1rem' }} />
+                          Ask AI
+                        </button>
+                      )}
                       <button
                         className="generate-report-btn"
                         onClick={() => handleGenerateReport(currentVideo.video_id)}
@@ -290,12 +302,28 @@ function App() {
                     </div>
                   </div>
 
-                  <div className="chat-section">
-                    <ChatInterface
-                      videoId={currentVideo.video_id}
-                      onTimestampClick={handleTimestampClick}
-                    />
-                  </div>
+                  {showAIPanel && (
+                    <div className="chat-section">
+                      <div className="ai-panel-header">
+                        <h3>
+                          <SmartToyIcon sx={{ fontSize: '1.1rem' }} />
+                          AI Learning Assistant
+                        </h3>
+                        <button
+                          className="close-ai-btn"
+                          onClick={() => setShowAIPanel(false)}
+                          title="Close AI Assistant"
+                        >
+                          <CloseIcon sx={{ fontSize: '1.2rem' }} />
+                        </button>
+                      </div>
+                      <ChatInterface
+                        videoId={currentVideo.video_id}
+                        onTimestampClick={handleTimestampClick}
+                        showHeader={false}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

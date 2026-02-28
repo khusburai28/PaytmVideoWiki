@@ -6,7 +6,7 @@ import SendIcon from '@mui/icons-material/Send'
 import { apiPost } from '../utils/api'
 import './ChatInterface.css'
 
-function ChatInterface({ videoId, onTimestampClick }) {
+function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -140,13 +140,15 @@ function ChatInterface({ videoId, onTimestampClick }) {
 
   return (
     <div className="chat-interface">
-      <div className="chat-header">
-        <h2>
-          <SmartToyIcon sx={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-          AI Learning Assistant
-        </h2>
-        <p>Get instant answers from the KT session</p>
-      </div>
+      {showHeader && (
+        <div className="chat-header">
+          <h2>
+            <SmartToyIcon sx={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
+            AI Learning Assistant
+          </h2>
+          <p>Get instant answers from the KT session</p>
+        </div>
+      )}
 
       <div className="chat-messages">
         {messages.length === 0 && (
