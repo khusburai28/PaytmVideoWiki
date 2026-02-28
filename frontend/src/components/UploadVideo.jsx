@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import WarningIcon from '@mui/icons-material/Warning'
+import { apiPost, apiGet } from '../utils/api'
 import './UploadVideo.css'
 
 function UploadVideo({ onVideoUploaded }) {
@@ -45,10 +46,7 @@ function UploadVideo({ onVideoUploaded }) {
       formData.append('name', videoName)
       formData.append('description', videoDescription)
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await apiPost('/api/upload', formData)
 
       if (!response.ok) {
         const errorData = await response.json()
@@ -71,7 +69,7 @@ function UploadVideo({ onVideoUploaded }) {
   const pollStatus = async (videoId) => {
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`/api/status/${videoId}`)
+        const response = await apiGet(`/api/status/${videoId}`)
         const data = await response.json()
 
         setProgress(data.progress)
@@ -81,7 +79,7 @@ function UploadVideo({ onVideoUploaded }) {
           setProcessing(false)
 
           // Fetch video info
-          const videoResponse = await fetch(`/api/videos`)
+          const videoResponse = await apiGet(`/api/videos`)
           const videos = await videoResponse.json()
           const video = videos.find(v => v.video_id === videoId)
 

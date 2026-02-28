@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import WavingHandIcon from '@mui/icons-material/WavingHand'
 import SendIcon from '@mui/icons-material/Send'
+import { apiPost } from '../utils/api'
 import './ChatInterface.css'
 
 function ChatInterface({ videoId, onTimestampClick }) {
@@ -95,16 +96,10 @@ function ChatInterface({ videoId, onTimestampClick }) {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          video_id: videoId,
-          message: input,
-          conversation_history: messages
-        }),
+      const response = await apiPost('/api/chat', {
+        video_id: videoId,
+        message: input,
+        conversation_history: messages
       })
 
       if (!response.ok) {

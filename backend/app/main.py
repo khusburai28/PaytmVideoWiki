@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -25,6 +25,16 @@ from app.services.video_processor import VideoProcessor
 from app.services.rag_engine import RAGEngine
 from app.services.gemini_client import GeminiClient
 from app.services.report_generator import ReportGenerator
+from app.services.auth_service import AuthService
+from app.models.auth_schemas import (
+    UserCreate, UserLogin, UserResponse, TokenResponse,
+    TeamCreate, TeamResponse, AddTeamMemberRequest, AssignUserToTeamRequest,
+    TeamMemberResponse, Role
+)
+from app.middleware.auth import (
+    get_current_user, get_current_active_user,
+    require_admin, require_team_lead_or_admin, check_video_permission
+)
 
 # Configure logging
 logging.basicConfig(
@@ -46,6 +56,7 @@ class Settings(BaseSettings):
     temp_dir: str = "./temp"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     whisper_model: str = "base"
+    jwt_secret_key: str = "your-secret-key-change-in-production-min-32-chars"
 
     class Config:
         env_file = ".env"
@@ -94,6 +105,10 @@ try:
         model_name=settings.gemini_model
     )
     report_generator = ReportGenerator(gemini_client=gemini_client)
+    auth_service = AuthService(
+        qdrant_client=rag_engine.qdrant_client,
+        secret_key=settings.jwt_secret_key
+    )
     logger.info("All services initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize services: {e}")
@@ -104,7 +119,15 @@ video_metadata = {}
 
 
 # Background task for processing video
-async def process_video_task(video_id: str, video_path: str, filename: str, name: str, description: str):
+async def process_video_task(
+    video_id: str,
+    video_path: str,
+    filename: str,
+    name: str,
+    description: str,
+    author_id: str,
+    team_id: Optional[str] = None
+):
     """Background task to process video."""
     try:
         logger.info(f"Starting background processing for video {video_id}")
@@ -122,7 +145,9 @@ async def process_video_task(video_id: str, video_path: str, filename: str, name
             description=description,
             duration=duration,
             filename=filename,
-            total_segments=len(segments)
+            total_segments=len(segments),
+            author_id=author_id,
+            team_id=team_id
         )
 
         # Update in-memory metadata for status tracking
@@ -134,7 +159,9 @@ async def process_video_task(video_id: str, video_path: str, filename: str, name
             "upload_date": datetime.now(),
             "status": "completed",
             "total_segments": len(segments),
-            "video_path": video_path
+            "video_path": video_path,
+            "author_id": author_id,
+            "team_id": team_id
         }
 
         logger.info(f"Video {video_id} processed successfully")
@@ -159,14 +186,296 @@ async def root():
     }
 
 
+# ============= Authentication Endpoints =============
+
+@app.post("/api/auth/register", response_model=TokenResponse)
+async def register(user_data: UserCreate):
+    """Register a new user."""
+    try:
+        # Create user
+        user_id = auth_service.create_user(
+            email=user_data.email,
+            password=user_data.password,
+            full_name=user_data.full_name,
+            role=user_data.role.value,
+            team_id=user_data.team_id
+        )
+
+        # Get user details
+        user = auth_service.get_user_by_id(user_id)
+
+        # Get team name if user has team
+        team_name = None
+        if user.get('team_id'):
+            team = auth_service.get_team_by_id(user['team_id'])
+            if team:
+                team_name = team.get('team_name')
+
+        # Create access token
+        access_token = auth_service.create_access_token(
+            user_id=user['user_id'],
+            email=user['email'],
+            role=user['role']
+        )
+
+        user_response = UserResponse(
+            user_id=user['user_id'],
+            email=user['email'],
+            full_name=user['full_name'],
+            role=Role(user['role']),
+            team_id=user.get('team_id'),
+            team_name=team_name,
+            created_at=datetime.fromisoformat(user['created_at']),
+            is_active=user.get('is_active', True)
+        )
+
+        return TokenResponse(access_token=access_token, user=user_response)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Registration failed: {e}")
+        raise HTTPException(status_code=500, detail="Registration failed")
+
+
+@app.post("/api/auth/login", response_model=TokenResponse)
+async def login(credentials: UserLogin):
+    """Login user."""
+    try:
+        # Authenticate user
+        user = auth_service.authenticate_user(credentials.email, credentials.password)
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="Incorrect email or password"
+            )
+
+        # Get team name if user has team
+        team_name = None
+        if user.get('team_id'):
+            team = auth_service.get_team_by_id(user['team_id'])
+            if team:
+                team_name = team.get('team_name')
+
+        # Create access token
+        access_token = auth_service.create_access_token(
+            user_id=user['user_id'],
+            email=user['email'],
+            role=user['role']
+        )
+
+        user_response = UserResponse(
+            user_id=user['user_id'],
+            email=user['email'],
+            full_name=user['full_name'],
+            role=Role(user['role']),
+            team_id=user.get('team_id'),
+            team_name=team_name,
+            created_at=datetime.fromisoformat(user['created_at']),
+            is_active=user.get('is_active', True)
+        )
+
+        return TokenResponse(access_token=access_token, user=user_response)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login failed: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(get_current_active_user)):
+    """Get current user information."""
+    try:
+        # Get team name if user has team
+        team_name = None
+        if current_user.get('team_id'):
+            team = auth_service.get_team_by_id(current_user['team_id'])
+            if team:
+                team_name = team.get('team_name')
+
+        return UserResponse(
+            user_id=current_user['user_id'],
+            email=current_user['email'],
+            full_name=current_user['full_name'],
+            role=Role(current_user['role']),
+            team_id=current_user.get('team_id'),
+            team_name=team_name,
+            created_at=datetime.fromisoformat(current_user['created_at']),
+            is_active=current_user.get('is_active', True)
+        )
+    except Exception as e:
+        logger.error(f"Failed to get user info: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get user info")
+
+
+# ============= Team Management Endpoints =============
+
+@app.post("/api/teams", response_model=TeamResponse)
+async def create_team(
+    team_data: TeamCreate,
+    current_user: dict = Depends(require_admin)
+):
+    """Create a new team (Admin only)."""
+    try:
+        team_id = auth_service.create_team(
+            team_name=team_data.team_name,
+            description=team_data.description,
+            created_by=current_user['user_id']
+        )
+
+        team = auth_service.get_team_by_id(team_id)
+        members = auth_service.get_team_members(team_id)
+
+        return TeamResponse(
+            team_id=team['team_id'],
+            team_name=team['team_name'],
+            description=team.get('description'),
+            created_by=team['created_by'],
+            created_at=datetime.fromisoformat(team['created_at']),
+            member_count=len(members)
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to create team: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create team")
+
+
+@app.post("/api/teams/{team_id}/members", response_model=UserResponse)
+async def add_team_member(
+    team_id: str,
+    member_data: AddTeamMemberRequest,
+    current_user: dict = Depends(require_team_lead_or_admin)
+):
+    """Add a member to team (Team Lead or Admin)."""
+    try:
+        # Verify team exists
+        team = auth_service.get_team_by_id(team_id)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        # If team lead, verify they belong to this team
+        if current_user['role'] == 'team_lead':
+            if current_user.get('team_id') != team_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Team leads can only add members to their own team"
+                )
+
+        # Create user and add to team
+        user_id = auth_service.create_user(
+            email=member_data.email,
+            password=member_data.password,
+            full_name=member_data.full_name,
+            role=member_data.role.value,
+            team_id=team_id
+        )
+
+        user = auth_service.get_user_by_id(user_id)
+
+        return UserResponse(
+            user_id=user['user_id'],
+            email=user['email'],
+            full_name=user['full_name'],
+            role=Role(user['role']),
+            team_id=user.get('team_id'),
+            team_name=team['team_name'],
+            created_at=datetime.fromisoformat(user['created_at']),
+            is_active=user.get('is_active', True)
+        )
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add team member: {e}")
+        raise HTTPException(status_code=500, detail="Failed to add team member")
+
+
+@app.get("/api/teams")
+async def get_all_teams(current_user: dict = Depends(get_current_active_user)):
+    """Get all teams with their members."""
+    try:
+        teams = auth_service.get_all_teams()
+
+        # Format teams with members
+        result = []
+        for team in teams:
+            members = auth_service.get_team_members(team['team_id'])
+            result.append({
+                **team,
+                'members': members
+            })
+
+        return result
+    except Exception as e:
+        logger.error(f"Failed to get teams: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get teams")
+
+
+@app.get("/api/users")
+async def get_all_users(current_user: dict = Depends(require_admin)):
+    """Get all users (Admin only)."""
+    try:
+        users = auth_service.get_all_users()
+        return users
+    except Exception as e:
+        logger.error(f"Failed to get users: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get users")
+
+
+@app.get("/api/teams/{team_id}/members", response_model=list[TeamMemberResponse])
+async def get_team_members(
+    team_id: str,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Get team members."""
+    try:
+        # Verify team exists
+        team = auth_service.get_team_by_id(team_id)
+        if not team:
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        # Non-admin users can only view their own team
+        if current_user['role'] != 'admin':
+            if current_user.get('team_id') != team_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You can only view members of your own team"
+                )
+
+        members = auth_service.get_team_members(team_id)
+
+        return [
+            TeamMemberResponse(
+                user_id=member['user_id'],
+                email=member['email'],
+                full_name=member['full_name'],
+                role=Role(member['role']),
+                joined_at=datetime.fromisoformat(member['created_at'])
+            )
+            for member in members
+        ]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get team members: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get team members")
+
+
 @app.post("/api/upload", response_model=VideoUploadResponse)
 async def upload_video(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     name: str = Form(...),
-    description: str = Form(...)
+    description: str = Form(...),
+    current_user: dict = Depends(get_current_active_user)
 ):
-    """Upload a video file for processing."""
+    """Upload a video file for processing (Authenticated users only)."""
     try:
         # Validate file type
         allowed_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.webm'}
@@ -197,11 +506,22 @@ async def upload_video(
             "name": name,
             "description": description,
             "status": "processing",
-            "upload_date": datetime.now()
+            "upload_date": datetime.now(),
+            "author_id": current_user['user_id'],
+            "team_id": current_user.get('team_id')
         }
 
         # Start background processing
-        background_tasks.add_task(process_video_task, video_id, video_path, file.filename, name, description)
+        background_tasks.add_task(
+            process_video_task,
+            video_id,
+            video_path,
+            file.filename,
+            name,
+            description,
+            current_user['user_id'],
+            current_user.get('team_id')
+        )
 
         return VideoUploadResponse(
             video_id=video_id,
@@ -489,14 +809,26 @@ async def generate_report(video_id: str):
 
 
 @app.delete("/api/video/{video_id}")
-async def delete_video(video_id: str):
-    """Delete a video and its data."""
+async def delete_video(video_id: str, current_user: dict = Depends(get_current_active_user)):
+    """Delete a video and its data (Author, Team Lead, or Admin only)."""
     # Check if video exists in Qdrant
     segment_count = rag_engine.get_video_segment_count(video_id)
     if segment_count == 0:
         raise HTTPException(status_code=404, detail="Video not found")
 
     try:
+        # Get video metadata to check permissions
+        metadata = rag_engine.get_video_metadata(video_id)
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Video metadata not found")
+
+        # Check if user has permission to delete
+        if not check_video_permission(metadata, current_user):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to delete this video. Only the author, team lead, or admin can delete."
+            )
+
         # Delete from Qdrant (segments and metadata)
         rag_engine.delete_video_segments(video_id)
         rag_engine.delete_video_metadata(video_id)
@@ -510,6 +842,8 @@ async def delete_video(video_id: str):
 
         return {"message": "Video deleted successfully"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to delete video: {e}")
         raise HTTPException(status_code=500, detail=f"Deletion failed: {str(e)}")

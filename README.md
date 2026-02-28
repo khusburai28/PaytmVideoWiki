@@ -24,7 +24,7 @@ A secure, local video RAG (Retrieval-Augmented Generation) system that allows yo
 ## Prerequisites
 
 - Docker and Docker Compose
-- Google Gemini API key ([Get it here](https://makersuite.google.com/app/apikey))
+- Google Gemini API key ([Get it here](https://aistudio.google.com/app/api-keys))
 - At least 4GB RAM for video processing
 
 ## Quick Start
@@ -50,41 +50,18 @@ A secure, local video RAG (Retrieval-Augmented Generation) system that allows yo
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
 
+
+## Default Admin Account:
+
+- Email: admin@example.com
+- Password: Admin@123456
+
 ## Usage
 
 1. **Upload Video**: Click "Upload Video" and select your MP4/MOV/AVI file
 2. **Wait for Processing**: The system will transcribe and index your video (takes 2-5 minutes)
 3. **Start Chatting**: Ask questions about the video content
 4. **Click Timestamps**: Click any timestamp in the chat to jump to that moment in the video
-
-## Project Structure
-
-```
-VideoRAG/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI application
-│   │   ├── services/
-│   │   │   ├── video_processor.py   # Video processing & transcription
-│   │   │   ├── rag_engine.py        # RAG logic with Qdrant
-│   │   │   └── gemini_client.py     # Gemini API integration
-│   │   └── models/
-│   │       └── schemas.py           # Pydantic models
-│   ├── requirements.txt
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── VideoPlayer.jsx
-│   │   │   ├── ChatInterface.jsx
-│   │   │   └── UploadVideo.jsx
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── Dockerfile
-├── docker-compose.yml
-└── README.md
-```
 
 ## Security & Privacy
 

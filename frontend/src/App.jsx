@@ -3,8 +3,14 @@ import VideoPlayer from './components/VideoPlayer'
 import ChatInterface from './components/ChatInterface'
 import UploadVideo from './components/UploadVideo'
 import VideoSidebar from './components/VideoSidebar'
+import Login from './components/Login'
+import AdminPanel from './components/AdminPanel'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DescriptionIcon from '@mui/icons-material/Description'
+import LogoutIcon from '@mui/icons-material/Logout'
+import GroupsIcon from '@mui/icons-material/Groups'
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
+import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
 function App() {
@@ -12,6 +18,9 @@ function App() {
   const [videoTime, setVideoTime] = useState(0)
   const [videos, setVideos] = useState([])
   const [generatingReport, setGeneratingReport] = useState(false)
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(null)
+  const [currentView, setCurrentView] = useState('videos') // 'videos' or 'admin'
 
   const handleVideoUploaded = (videoInfo) => {
     setCurrentVideo(videoInfo)
@@ -29,9 +38,7 @@ function App() {
   const handleGenerateReport = async (videoId) => {
     setGeneratingReport(true)
     try {
-      const response = await fetch(`/api/video/${videoId}/report`, {
-        method: 'POST'
-      })
+      const response = await apiPost(`/api/video/${videoId}/report`)
 
       if (!response.ok) {
         throw new Error('Failed to generate report')
@@ -65,9 +72,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`/api/video/${videoId}`, {
-        method: 'DELETE'
-      })
+      const response = await apiDelete(`/api/video/${videoId}`)
 
       if (!response.ok) {
         throw new Error('Failed to delete video')
@@ -89,8 +94,10 @@ function App() {
   }
 
   const loadVideos = async () => {
+    if (!token) return
+
     try {
-      const response = await fetch('/api/videos')
+      const response = await apiGet('/api/videos')
       const data = await response.json()
       setVideos(data.filter(v => v.status === 'completed'))
     } catch (error) {
@@ -98,9 +105,41 @@ function App() {
     }
   }
 
+  const handleLoginSuccess = (userData, accessToken) => {
+    setUser(userData)
+    setToken(accessToken)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('user')
+    setUser(null)
+    setToken(null)
+    setCurrentVideo(null)
+    setVideos([])
+  }
+
   useEffect(() => {
-    loadVideos()
+    // Check for existing auth
+    const storedToken = localStorage.getItem('access_token')
+    const storedUser = localStorage.getItem('user')
+
+    if (storedToken && storedUser) {
+      setToken(storedToken)
+      setUser(JSON.parse(storedUser))
+    }
   }, [])
+
+  useEffect(() => {
+    if (token) {
+      loadVideos()
+    }
+  }, [token])
+
+  // Show login if not authenticated
+  if (!user || !token) {
+    return <Login onLoginSuccess={handleLoginSuccess} />
+  }
 
   return (
     <div className="app">
@@ -114,69 +153,103 @@ function App() {
               <p>Your onboarding & learning companion</p>
             </div>
           </div>
+          <div className="header-user-info">
+            {user.role === 'admin' && (
+              <div className="view-toggle">
+                <button
+                  className={`toggle-btn ${currentView === 'videos' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('videos')}
+                >
+                  <VideoLibraryIcon sx={{ fontSize: '1rem' }} />
+                  Videos
+                </button>
+                <button
+                  className={`toggle-btn ${currentView === 'admin' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('admin')}
+                >
+                  <GroupsIcon sx={{ fontSize: '1rem' }} />
+                  Teams
+                </button>
+              </div>
+            )}
+            <span className="user-name">{user.full_name}</span>
+            <span className="user-role">{user.role}</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogoutIcon sx={{ fontSize: '1.1rem' }} />
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="app-container">
-        <VideoSidebar
-          videos={videos}
-          currentVideo={currentVideo}
-          onVideoSelect={handleVideoSelect}
-        />
+        {currentView === 'admin' ? (
+          <div className="main-content" style={{ maxWidth: '100%' }}>
+            <AdminPanel user={user} />
+          </div>
+        ) : (
+          <>
+            <VideoSidebar
+              videos={videos}
+              currentVideo={currentVideo}
+              onVideoSelect={handleVideoSelect}
+            />
 
-        <div className="main-content">
-          {!currentVideo ? (
-            <div className="upload-section">
-              <UploadVideo onVideoUploaded={handleVideoUploaded} />
-            </div>
-          ) : (
-            <div className="player-interface">
-              <div className="video-section">
-                <div className="video-header">
-                  <div className="video-header-info">
-                    <h3 className="video-header-title">
-                      {currentVideo.name || currentVideo.filename}
-                    </h3>
-                    {currentVideo.description && (
-                      <p className="video-header-description">
-                        {currentVideo.description}
-                      </p>
-                    )}
+            <div className="main-content">
+              {!currentVideo ? (
+                <div className="upload-section">
+                  <UploadVideo onVideoUploaded={handleVideoUploaded} />
+                </div>
+              ) : (
+                <div className="player-interface">
+                  <div className="video-section">
+                    <div className="video-header">
+                      <div className="video-header-info">
+                        <h3 className="video-header-title">
+                          {currentVideo.name || currentVideo.filename}
+                        </h3>
+                        {currentVideo.description && (
+                          <p className="video-header-description">
+                            {currentVideo.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <VideoPlayer
+                      videoId={currentVideo.video_id}
+                      seekTime={videoTime}
+                    />
+                    <div className="video-actions">
+                      <button
+                        className="generate-report-btn"
+                        onClick={() => handleGenerateReport(currentVideo.video_id)}
+                        disabled={generatingReport}
+                      >
+                        <DescriptionIcon sx={{ fontSize: '1.1rem' }} />
+                        {generatingReport ? 'Generating...' : 'Generate Report'}
+                      </button>
+                      <button
+                        className="delete-video-btn"
+                        onClick={() => handleDeleteVideo(currentVideo.video_id)}
+                        disabled={generatingReport}
+                      >
+                        <DeleteIcon sx={{ fontSize: '1.1rem' }} />
+                        Delete Video
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="chat-section">
+                    <ChatInterface
+                      videoId={currentVideo.video_id}
+                      onTimestampClick={handleTimestampClick}
+                    />
                   </div>
                 </div>
-                <VideoPlayer
-                  videoId={currentVideo.video_id}
-                  seekTime={videoTime}
-                />
-                <div className="video-actions">
-                  <button
-                    className="generate-report-btn"
-                    onClick={() => handleGenerateReport(currentVideo.video_id)}
-                    disabled={generatingReport}
-                  >
-                    <DescriptionIcon sx={{ fontSize: '1.1rem' }} />
-                    {generatingReport ? 'Generating...' : 'Generate Report'}
-                  </button>
-                  <button
-                    className="delete-video-btn"
-                    onClick={() => handleDeleteVideo(currentVideo.video_id)}
-                    disabled={generatingReport}
-                  >
-                    <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                    Delete Video
-                  </button>
-                </div>
-              </div>
-
-              <div className="chat-section">
-                <ChatInterface
-                  videoId={currentVideo.video_id}
-                  onTimestampClick={handleTimestampClick}
-                />
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {/* <footer className="paytm-footer">

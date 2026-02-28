@@ -346,7 +346,9 @@ class RAGEngine:
         description: str,
         duration: float,
         filename: str,
-        total_segments: int
+        total_segments: int,
+        author_id: str,
+        team_id: Optional[str] = None
     ):
         """Save video metadata to Qdrant metadata collection."""
         try:
@@ -360,7 +362,9 @@ class RAGEngine:
                     "duration": duration,
                     "filename": filename,
                     "total_segments": total_segments,
-                    "upload_date": datetime.now().isoformat()
+                    "upload_date": datetime.now().isoformat(),
+                    "author_id": author_id,
+                    "team_id": team_id
                 }
             )
 

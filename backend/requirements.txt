@@ -20,6 +20,11 @@ google-genai
 aiofiles==23.2.1
 python-json-logger==2.0.7
 
+# Authentication
+bcrypt==4.1.2
+pyjwt==2.8.0
+email-validator==2.1.0
+
 # Report Generation
 markdown==3.5.1
 weasyprint>=62.0
