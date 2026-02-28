@@ -63,6 +63,9 @@ Duration: {self._format_time(duration)}
 TRANSCRIPT:
 {full_transcript[:20000]}  # Limit to avoid token limits
 
+"""
+
+        additional_report_formatting_rule = f"""
 Generate a professional technical report in Markdown format with the following structure:
 
 # {video_name}
@@ -105,9 +108,6 @@ Generate a professional technical report in Markdown format with the following s
 ## 7. Resources & References
 [Any tools, libraries, documentation, or resources mentioned]
 
-## Appendix: Full Transcript
-[Include the complete transcript with timestamps]
-
 Important:
 - Use proper Markdown formatting
 - Include relevant timestamps using [MM:SS] format
@@ -116,6 +116,8 @@ Important:
 - Use bullet points, numbered lists, and tables where appropriate
 - Highlight code snippets with ```language``` blocks if code is mentioned
 """
+        if not additional_instructions:
+            prompt += additional_report_formatting_rule
 
         try:
             logger.info("Generating report content with AI...")
