@@ -39,7 +39,7 @@ class GeminiClient:
 Guidelines:
 - Format answers using bullet points for better readability
 - Keep each bullet point clear and concise
-- Use timestamps [MM:SS] when referencing specific moments
+- Use timestamps MM:SS or HH:MM:SS when referencing specific moments (DO NOT use square brackets around timestamps)
 - Answer naturally as if you watched the video
 - For simple questions, provide 2-3 key bullet points
 - For detailed questions, organize information in logical bullet point sections
@@ -194,7 +194,7 @@ Answer concisely using the video content. Keep it brief and natural."""
 Guidelines:
 - Answer questions about both the video content and uploaded files
 - Format answers using bullet points for clarity
-- Use timestamps [MM:SS] when referencing video moments
+- Use timestamps MM:SS or HH:MM:SS when referencing video moments (DO NOT use square brackets around timestamps)
 - Reference specific parts of uploaded files when relevant
 - Provide clear, concise responses
 
