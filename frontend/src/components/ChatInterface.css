@@ -131,7 +131,7 @@
 
 /* Markdown formatting in assistant messages */
 .message.assistant .message-text p {
-  margin: 0.75rem 0;
+  margin: 0.4rem 0;
 }
 
 .message.assistant .message-text p:first-child {
@@ -144,13 +144,13 @@
 
 .message.assistant .message-text ul,
 .message.assistant .message-text ol {
-  margin: 0.75rem 0;
+  margin: 0.4rem 0;
   padding-left: 1.5rem;
 }
 
 .message.assistant .message-text li {
-  margin: 0.5rem 0;
-  line-height: 1.7;
+  margin: 0.3rem 0;
+  line-height: 1.5;
 }
 
 .message.assistant .message-text ul li {
@@ -163,13 +163,13 @@
 
 .message.assistant .message-text ul ul,
 .message.assistant .message-text ol ul {
-  margin: 0.25rem 0;
+  margin: 0.2rem 0;
   padding-left: 1.25rem;
 }
 
 .message.assistant .message-text ul ul li {
   list-style-type: circle;
-  margin: 0.25rem 0;
+  margin: 0.2rem 0;
 }
 
 .message.assistant .message-text strong {
