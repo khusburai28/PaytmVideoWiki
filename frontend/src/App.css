@@ -586,3 +586,67 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Team Membership Required Styles */
+.team-required-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 100px);
+  padding: 2rem;
+  background: var(--bg-secondary);
+}
+
+.team-required-card {
+  background: var(--bg-primary);
+  border-radius: 12px;
+  padding: 3rem 2.5rem;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.team-required-card h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.team-required-card p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0.75rem 0;
+  line-height: 1.6;
+}
+
+.team-required-card .contact-message {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin: 1.5rem 0;
+}
+
+.team-required-card .contact-message strong {
+  color: var(--paytm-blue);
+}
+
+.user-info-box {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-top: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.user-info-box p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.user-info-box strong {
+  color: var(--text-secondary);
+  font-weight: 500;
+}

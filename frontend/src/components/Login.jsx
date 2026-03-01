@@ -67,7 +67,6 @@ function Login({ onLoginSuccess }) {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <img src="/logo.svg" alt="Logo" className="login-logo" />
           <h1>Knowledge Transfer Hub</h1>
           <p>Your onboarding & learning companion</p>
         </div>

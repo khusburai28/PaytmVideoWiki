@@ -9,7 +9,7 @@ from app.models.schemas import (
     VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
     VideoInfo, TimestampReference, ReportGenerationRequest
 )
-from app.middleware.auth import get_current_active_user, check_video_permission
+from app.middleware.auth import get_current_active_user, check_video_permission, require_team_membership
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +31,9 @@ async def upload_video(
     file: UploadFile = File(...),
     name: str = Form(...),
     description: str = Form(...),
-    current_user: dict = Depends(get_current_active_user)
+    current_user: dict = Depends(require_team_membership)
 ):
-    """Upload a video file for processing (Authenticated users only)."""
+    """Upload a video file for processing (Team members only)."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
@@ -98,7 +98,7 @@ async def upload_video(
 
 
 @router.get("/status/{video_id}", response_model=VideoProcessingStatus)
-async def get_processing_status(video_id: str):
+async def get_processing_status(video_id: str, current_user: dict = Depends(require_team_membership)):
     """Get processing status for a video."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
@@ -129,7 +129,7 @@ async def get_processing_status(video_id: str):
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_video(request: ChatRequest):
+async def chat_with_video(request: ChatRequest, current_user: dict = Depends(require_team_membership)):
     """Chat with AI about video content."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
@@ -178,7 +178,7 @@ async def chat_with_video(request: ChatRequest):
 
 
 @router.get("/video/{video_id}")
-async def get_video(video_id: str, request: Request):
+async def get_video(video_id: str, request: Request, current_user: dict = Depends(require_team_membership)):
     """Stream video file with range request support."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
@@ -243,7 +243,7 @@ async def get_video(video_id: str, request: Request):
 
 
 @router.get("/videos", response_model=list[VideoInfo])
-async def list_videos():
+async def list_videos(current_user: dict = Depends(require_team_membership)):
     """Get list of all processed videos."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
@@ -285,7 +285,8 @@ async def list_videos():
 @router.post("/video/{video_id}/report")
 async def generate_video_report(
     video_id: str,
-    request: ReportGenerationRequest = ReportGenerationRequest()
+    request: ReportGenerationRequest = ReportGenerationRequest(),
+    current_user: dict = Depends(require_team_membership)
 ):
     """Generate PDF report for a video with optional additional instructions."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()

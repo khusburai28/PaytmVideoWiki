@@ -32,12 +32,21 @@ function VideoPlayer({ videoId, seekTime }) {
         },
       })
 
+      playerRef.current = player
+    }
+  }, [])
+
+  // Update video source when videoId changes
+  useEffect(() => {
+    const player = playerRef.current
+
+    if (player && !player.isDisposed() && videoId) {
       player.src({
         src: `/api/video/${videoId}`,
         type: 'video/mp4',
       })
 
-      playerRef.current = player
+      player.load()
     }
   }, [videoId])
 

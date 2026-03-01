@@ -180,6 +180,50 @@ function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
+  // Show team membership required message for non-admin users without a team
+  if (user.role !== 'admin' && !user.team_id) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <div className="header-content">
+            <div className="header-logo">
+              <div>
+                <h1>Knowledge Transfer Hub</h1>
+                <p>Your onboarding & learning companion</p>
+              </div>
+            </div>
+            <div className="header-user-info">
+              <div className="user-details">
+                <span className="user-name">{user.full_name}</span>
+                <div className="user-badges">
+                  <span className="user-role">{user.role}</span>
+                </div>
+              </div>
+              <button className="logout-btn" onClick={handleLogout}>
+                <LogoutIcon sx={{ fontSize: '1.1rem' }} />
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+        <div className="team-required-container">
+          <div className="team-required-card">
+            <GroupsIcon sx={{ fontSize: '4rem', color: '#00BAF2', marginBottom: '1rem' }} />
+            <h2>Team Membership Required</h2>
+            <p>You must be part of a team to access the Knowledge Transfer Hub.</p>
+            <p className="contact-message">
+              Please contact your <strong>Team Lead</strong> or <strong>Admin</strong> to be added to a team.
+            </p>
+            <div className="user-info-box">
+              <p><strong>Your Email:</strong> {user.email}</p>
+              <p><strong>Your Name:</strong> {user.full_name}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="app-header">

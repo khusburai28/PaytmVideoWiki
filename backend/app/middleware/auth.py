@@ -89,6 +89,21 @@ async def require_team_lead_or_admin(current_user: Dict = Depends(get_current_ac
     return current_user
 
 
+async def require_team_membership(current_user: Dict = Depends(get_current_active_user)):
+    """Require user to be part of a team (except admin)."""
+    # Admins don't need team membership
+    if current_user.get('role') == 'admin':
+        return current_user
+
+    # All other users must have a team_id
+    if not current_user.get('team_id'):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You must be part of a team to access this resource. Please contact your team lead or admin to be added to a team."
+        )
+    return current_user
+
+
 def check_video_permission(video_metadata: Dict, current_user: Dict) -> bool:
     """Check if user has permission to modify/delete video."""
     user_role = current_user.get('role')
