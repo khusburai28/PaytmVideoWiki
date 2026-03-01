@@ -131,26 +131,23 @@
 
 /* Markdown formatting in assistant messages */
 .message.assistant .message-text p {
-  margin: 0.4rem 0;
-}
-
-.message.assistant .message-text p:first-child {
-  margin-top: 0;
-}
-
-.message.assistant .message-text p:last-child {
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .message.assistant .message-text ul,
 .message.assistant .message-text ol {
-  margin: 0.4rem 0;
+  margin: 0;
   padding-left: 1.5rem;
 }
 
 .message.assistant .message-text li {
-  margin: 0.3rem 0;
+  margin: 0;
   line-height: 1.5;
+  display: block;
+}
+
+.message.assistant .message-text li > span:empty {
+  display: none;
 }
 
 .message.assistant .message-text ul li {
@@ -163,13 +160,13 @@
 
 .message.assistant .message-text ul ul,
 .message.assistant .message-text ol ul {
-  margin: 0.2rem 0;
+  margin: 0;
   padding-left: 1.25rem;
 }
 
 .message.assistant .message-text ul ul li {
   list-style-type: circle;
-  margin: 0.2rem 0;
+  margin: 0;
 }
 
 .message.assistant .message-text strong {
@@ -195,7 +192,7 @@
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;
-  margin: 0.75rem 0;
+  margin: 0;
   border: 1px solid var(--border-color);
 }
 
@@ -208,8 +205,7 @@
 .message.assistant .message-text h1,
 .message.assistant .message-text h2,
 .message.assistant .message-text h3 {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+  margin: 0;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -229,7 +225,7 @@
 .message.assistant .message-text blockquote {
   border-left: 3px solid var(--paytm-blue);
   padding-left: 1rem;
-  margin: 0.75rem 0;
+  margin: 0;
   color: var(--text-secondary);
   font-style: italic;
 }

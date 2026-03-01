@@ -262,16 +262,20 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
                         // For list items, process text content while preserving nested elements
                         const processContent = (content) => {
                           if (typeof content === 'string') {
+                            // Skip whitespace-only strings
+                            if (content.trim() === '') return null
                             return renderMessageWithClickableTimestamps(content)
                           }
                           if (Array.isArray(content)) {
                             return content.map((item, idx) => {
                               if (typeof item === 'string') {
+                                // Skip whitespace-only strings
+                                if (item.trim() === '') return null
                                 return <span key={idx}>{renderMessageWithClickableTimestamps(item)}</span>
                               }
                               // Preserve nested elements like <ul>, <ol>
                               return item
-                            })
+                            }).filter(Boolean)
                           }
                           return content
                         }
