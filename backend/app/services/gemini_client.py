@@ -167,7 +167,7 @@ Answer concisely using the video content. Keep it brief and natural."""
                     # Extract text from PDF
                     pdf_text = self._extract_pdf_text(content)
                     if pdf_text:
-                        content_parts.append(types.Part.from_text(f"PDF Content from {filename}:\n{pdf_text[:5000]}"))  # Limit PDF text
+                        content_parts.append(types.Part(text=f"PDF Content from {filename}:\n{pdf_text[:5000]}"))  # Limit PDF text
                         file_descriptions.append(f"- PDF: {filename}")
                         logger.info(f"Processed PDF: {filename}")
 
@@ -175,7 +175,7 @@ Answer concisely using the video content. Keep it brief and natural."""
                     # Handle text files
                     try:
                         text_content = content.decode('utf-8')
-                        content_parts.append(types.Part.from_text(f"File content from {filename}:\n{text_content[:5000]}"))
+                        content_parts.append(types.Part(text=f"File content from {filename}:\n{text_content[:5000]}"))
                         file_descriptions.append(f"- Text file: {filename}")
                         logger.info(f"Processed text file: {filename}")
                     except:
@@ -208,7 +208,7 @@ Guidelines:
 
         try:
             # Create content with both text and file parts
-            contents = [types.Part.from_text(system_prompt)] + content_parts + [types.Part.from_text(user_prompt)]
+            contents = [types.Part(text=system_prompt)] + content_parts + [types.Part(text=user_prompt)]
 
             # Generate response
             response = self.client.models.generate_content(
