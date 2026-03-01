@@ -186,6 +186,9 @@ Answer concisely using the video content. Keep it brief and natural."""
                 file_descriptions.append(f"- File (error processing): {filename}")
 
         # Build the system prompt
+        video_section = f"Video Content:\n{context_text}" if context_text else ""
+        files_section = "Uploaded Files:\n" + "\n".join(file_descriptions) if file_descriptions else ""
+
         system_prompt = f"""You are a knowledge transfer assistant helping users understand video content and analyze uploaded files.
 
 Guidelines:
@@ -195,9 +198,9 @@ Guidelines:
 - Reference specific parts of uploaded files when relevant
 - Provide clear, concise responses
 
-{"Video Content:\n" + context_text if context_text else ""}
+{video_section}
 
-{"Uploaded Files:\n" + chr(10).join(file_descriptions) if file_descriptions else ""}
+{files_section}
 """
 
         # Build user query

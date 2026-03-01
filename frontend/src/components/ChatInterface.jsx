@@ -358,7 +358,7 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask a question or attach a file..."
+            placeholder="Ask a question..."
             rows={1}
             disabled={loading}
           />

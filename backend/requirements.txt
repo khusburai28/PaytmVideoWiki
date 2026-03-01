@@ -28,3 +28,7 @@ email-validator==2.1.0
 # Report Generation
 markdown==3.5.1
 weasyprint>=62.0
+
+# File Processing
+PyPDF2==3.0.1
+Pillow==10.2.0
