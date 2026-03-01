@@ -1,6 +1,11 @@
 from google import genai
-from typing import List, Dict
+from google.genai import types
+from typing import List, Dict, Optional
 import logging
+import base64
+from PIL import Image
+import io
+import PyPDF2
 
 logger = logging.getLogger(__name__)
 
@@ -124,3 +129,108 @@ Answer concisely using the video content. Keep it brief and natural."""
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
             raise Exception(f"Failed to generate content: {str(e)}")
+
+    def generate_response_with_files(
+        self,
+        query: str,
+        context_segments: List[Dict],
+        conversation_history: List[Dict] = None,
+        files: List[Dict] = None
+    ) -> str:
+        """Generate response using Gemini with context and optional file uploads."""
+
+        # If no files, use regular response generation
+        if not files:
+            return self.generate_response(query, context_segments, conversation_history)
+
+        # Build context from video segments
+        context_text = self._build_context(context_segments) if context_segments else ""
+
+        # Process files and create content parts
+        content_parts = []
+        file_descriptions = []
+
+        for file_info in files:
+            file_type = file_info['content_type']
+            content = file_info['content']
+            filename = file_info['filename']
+
+            try:
+                if file_type.startswith('image/'):
+                    # Handle image files
+                    image = Image.open(io.BytesIO(content))
+                    content_parts.append(types.Part.from_image(image=image))
+                    file_descriptions.append(f"- Image: {filename}")
+                    logger.info(f"Processed image: {filename}")
+
+                elif file_type == 'application/pdf':
+                    # Extract text from PDF
+                    pdf_text = self._extract_pdf_text(content)
+                    if pdf_text:
+                        content_parts.append(types.Part.from_text(f"PDF Content from {filename}:\n{pdf_text[:5000]}"))  # Limit PDF text
+                        file_descriptions.append(f"- PDF: {filename}")
+                        logger.info(f"Processed PDF: {filename}")
+
+                elif file_type.startswith('text/') or filename.endswith(('.txt', '.md', '.doc', '.docx')):
+                    # Handle text files
+                    try:
+                        text_content = content.decode('utf-8')
+                        content_parts.append(types.Part.from_text(f"File content from {filename}:\n{text_content[:5000]}"))
+                        file_descriptions.append(f"- Text file: {filename}")
+                        logger.info(f"Processed text file: {filename}")
+                    except:
+                        file_descriptions.append(f"- File (could not read): {filename}")
+
+            except Exception as e:
+                logger.error(f"Error processing file {filename}: {e}")
+                file_descriptions.append(f"- File (error processing): {filename}")
+
+        # Build the system prompt
+        system_prompt = f"""You are a knowledge transfer assistant helping users understand video content and analyze uploaded files.
+
+Guidelines:
+- Answer questions about both the video content and uploaded files
+- Format answers using bullet points for clarity
+- Use timestamps [MM:SS] when referencing video moments
+- Reference specific parts of uploaded files when relevant
+- Provide clear, concise responses
+
+{"Video Content:\n" + context_text if context_text else ""}
+
+{"Uploaded Files:\n" + chr(10).join(file_descriptions) if file_descriptions else ""}
+"""
+
+        # Build user query
+        user_prompt = f"Question: {query}\n\nPlease answer based on the video content and uploaded files."
+
+        try:
+            # Create content with both text and file parts
+            contents = [types.Part.from_text(system_prompt)] + content_parts + [types.Part.from_text(user_prompt)]
+
+            # Generate response
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=contents
+            )
+            return response.text
+
+        except Exception as e:
+            logger.error(f"Gemini API error with files: {e}")
+            raise Exception(f"Failed to generate response with files: {str(e)}")
+
+    def _extract_pdf_text(self, pdf_content: bytes) -> str:
+        """Extract text from PDF bytes."""
+        try:
+            pdf_file = io.BytesIO(pdf_content)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            text_parts = []
+
+            # Extract text from first 10 pages
+            for page_num in range(min(10, len(pdf_reader.pages))):
+                page = pdf_reader.pages[page_num]
+                text_parts.append(page.extract_text())
+
+            return "\n".join(text_parts)
+        except Exception as e:
+            logger.error(f"PDF extraction error: {e}")
+            return ""

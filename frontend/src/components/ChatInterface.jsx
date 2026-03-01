@@ -3,6 +3,11 @@ import ReactMarkdown from 'react-markdown'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import WavingHandIcon from '@mui/icons-material/WavingHand'
 import SendIcon from '@mui/icons-material/Send'
+import AttachFileIcon from '@mui/icons-material/AttachFile'
+import CloseIcon from '@mui/icons-material/Close'
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
+import ImageIcon from '@mui/icons-material/Image'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
 import { apiPost } from '../utils/api'
 import './ChatInterface.css'
 
@@ -10,7 +15,9 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [attachedFiles, setAttachedFiles] = useState([])
   const messagesEndRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -19,6 +26,31 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files)
+    setAttachedFiles(prev => [...prev, ...files])
+  }
+
+  const removeFile = (index) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const getFileIcon = (file) => {
+    if (file.type.startsWith('image/')) {
+      return <ImageIcon sx={{ fontSize: '1.2rem' }} />
+    } else if (file.type === 'application/pdf') {
+      return <PictureAsPdfIcon sx={{ fontSize: '1.2rem' }} />
+    } else {
+      return <InsertDriveFileIcon sx={{ fontSize: '1.2rem' }} />
+    }
+  }
+
+  const formatFileSize = (bytes) => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  }
 
   const formatTime = (seconds) => {
     const hours = Math.floor(seconds / 3600)
@@ -120,24 +152,34 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return
+    if ((!input.trim() && attachedFiles.length === 0) || loading) return
 
     const userMessage = {
       role: 'user',
       content: input,
+      files: attachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
       timestamp: new Date().toISOString()
     }
 
     setMessages(prev => [...prev, userMessage])
+    const currentInput = input
+    const currentFiles = attachedFiles
     setInput('')
+    setAttachedFiles([])
     setLoading(true)
 
     try {
-      const response = await apiPost('/api/chat', {
-        video_id: videoId,
-        message: input,
-        conversation_history: messages
+      const formData = new FormData()
+      formData.append('video_id', videoId)
+      formData.append('message', currentInput)
+      formData.append('conversation_history', JSON.stringify(messages))
+
+      // Append all files
+      currentFiles.forEach((file, index) => {
+        formData.append('files', file)
       })
+
+      const response = await apiPost('/api/chat', formData)
 
       if (!response.ok) {
         throw new Error('Failed to get response')
@@ -240,7 +282,20 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
                     {message.content}
                   </ReactMarkdown>
                 ) : (
-                  message.content
+                  <>
+                    {message.content}
+                    {message.files && message.files.length > 0 && (
+                      <div className="message-files">
+                        {message.files.map((file, idx) => (
+                          <div key={idx} className="message-file-item">
+                            {getFileIcon(file)}
+                            <span className="file-name">{file.name}</span>
+                            <span className="file-size">({formatFileSize(file.size)})</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -262,23 +317,59 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="chat-input-container">
-        <textarea
-          className="chat-input"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Ask a question..."
-          rows={1}
-          disabled={loading}
-        />
-        <button
-          className="send-button"
-          onClick={handleSend}
-          disabled={!input.trim() || loading}
-        >
-          {loading ? '...' : <SendIcon sx={{ fontSize: '1.2rem' }} />}
-        </button>
+      <div className="chat-input-wrapper">
+        {attachedFiles.length > 0 && (
+          <div className="attached-files-preview">
+            {attachedFiles.map((file, index) => (
+              <div key={index} className="attached-file-chip">
+                {getFileIcon(file)}
+                <span className="attached-file-name">{file.name}</span>
+                <span className="attached-file-size">{formatFileSize(file.size)}</span>
+                <button
+                  className="remove-file-btn"
+                  onClick={() => removeFile(index)}
+                  title="Remove file"
+                >
+                  <CloseIcon sx={{ fontSize: '1rem' }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="chat-input-container">
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <button
+            className="attach-button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loading}
+            title="Attach file"
+          >
+            <AttachFileIcon sx={{ fontSize: '1.2rem' }} />
+          </button>
+          <textarea
+            className="chat-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Ask a question or attach a file..."
+            rows={1}
+            disabled={loading}
+          />
+          <button
+            className="send-button"
+            onClick={handleSend}
+            disabled={(!input.trim() && attachedFiles.length === 0) || loading}
+          >
+            {loading ? '...' : <SendIcon sx={{ fontSize: '1.2rem' }} />}
+          </button>
+        </div>
       </div>
     </div>
   )

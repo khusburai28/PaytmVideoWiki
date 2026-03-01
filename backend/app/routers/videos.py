@@ -3,7 +3,9 @@ from fastapi.responses import StreamingResponse
 from pathlib import Path
 from datetime import datetime
 from qdrant_client.models import Filter, FieldCondition, MatchValue
+from typing import List, Optional
 import logging
+import json
 
 from app.models.schemas import (
     VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
@@ -129,30 +131,54 @@ async def get_processing_status(video_id: str, current_user: dict = Depends(requ
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_video(request: ChatRequest, current_user: dict = Depends(require_team_membership)):
-    """Chat with AI about video content."""
+async def chat_with_video(
+    video_id: str = Form(...),
+    message: str = Form(...),
+    conversation_history: str = Form("[]"),
+    files: List[UploadFile] = File(default=[]),
+    current_user: dict = Depends(require_team_membership)
+):
+    """Chat with AI about video content with optional file uploads."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 
     try:
-        # Search for relevant segments
+        # Parse conversation history
+        conv_history = json.loads(conversation_history) if conversation_history else []
+
+        # Process uploaded files if any
+        file_contents = []
+        if files:
+            for file in files:
+                content = await file.read()
+                file_info = {
+                    "filename": file.filename,
+                    "content_type": file.content_type,
+                    "size": len(content),
+                    "content": content
+                }
+                file_contents.append(file_info)
+                logger.info(f"Received file: {file.filename} ({file.content_type}, {len(content)} bytes)")
+
+        # Search for relevant segments from video
         relevant_segments = rag_engine.search_segments(
-            video_id=request.video_id,
-            query=request.message,
+            video_id=video_id,
+            query=message,
             top_k=15
         )
 
-        if not relevant_segments:
+        if not relevant_segments and not file_contents:
             return ChatResponse(
                 response="I couldn't find any relevant information in the video for your question.",
                 timestamps=[],
                 sources_used=0
             )
 
-        # Generate response using Gemini
-        response_text = gemini_client.generate_response(
-            query=request.message,
+        # Generate response using Gemini (with files if provided)
+        response_text = gemini_client.generate_response_with_files(
+            query=message,
             context_segments=relevant_segments,
-            conversation_history=request.conversation_history
+            conversation_history=conv_history,
+            files=file_contents
         )
 
         # Extract timestamps as references

@@ -100,9 +100,13 @@
 }
 
 .message-content {
-  padding: 0.9rem 1.1rem;
+  padding: 1rem 1.25rem;
   border-radius: 16px;
   word-wrap: break-word;
+}
+
+.message.assistant .message-content {
+  padding: 1.25rem 1.5rem;
 }
 
 .message.user .message-content {
@@ -121,8 +125,113 @@
 }
 
 .message-text {
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-wrap;
+}
+
+/* Markdown formatting in assistant messages */
+.message.assistant .message-text p {
+  margin: 0.75rem 0;
+}
+
+.message.assistant .message-text p:first-child {
+  margin-top: 0;
+}
+
+.message.assistant .message-text p:last-child {
+  margin-bottom: 0;
+}
+
+.message.assistant .message-text ul,
+.message.assistant .message-text ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.message.assistant .message-text li {
+  margin: 0.5rem 0;
+  line-height: 1.7;
+}
+
+.message.assistant .message-text ul li {
+  list-style-type: disc;
+}
+
+.message.assistant .message-text ol li {
+  list-style-type: decimal;
+}
+
+.message.assistant .message-text ul ul,
+.message.assistant .message-text ol ul {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.message.assistant .message-text ul ul li {
+  list-style-type: circle;
+  margin: 0.25rem 0;
+}
+
+.message.assistant .message-text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.message.assistant .message-text em {
+  font-style: italic;
+}
+
+.message.assistant .message-text code {
+  background: var(--bg-primary);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'Courier New', monospace;
+  border: 1px solid var(--border-color);
+}
+
+.message.assistant .message-text pre {
+  background: var(--bg-primary);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border: 1px solid var(--border-color);
+}
+
+.message.assistant .message-text pre code {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.message.assistant .message-text h1,
+.message.assistant .message-text h2,
+.message.assistant .message-text h3 {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.message.assistant .message-text h1 {
+  font-size: 1.3em;
+}
+
+.message.assistant .message-text h2 {
+  font-size: 1.2em;
+}
+
+.message.assistant .message-text h3 {
+  font-size: 1.1em;
+}
+
+.message.assistant .message-text blockquote {
+  border-left: 3px solid var(--paytm-blue);
+  padding-left: 1rem;
+  margin: 0.75rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .inline-timestamp {
@@ -233,13 +342,70 @@
   }
 }
 
+.chat-input-wrapper {
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.attached-files-preview {
+  padding: 1rem 1.25rem 0 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.attached-file-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--paytm-sky);
+  border: 1px solid var(--paytm-blue);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.attached-file-chip .MuiSvgIcon-root {
+  color: var(--paytm-blue);
+}
+
+.attached-file-name {
+  font-weight: 500;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attached-file-size {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.remove-file-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
 .chat-input-container {
   display: flex;
   align-items: flex-end;
   gap: 0.75rem;
   padding: 1.25rem;
-  background: var(--bg-primary);
-  border-top: 1px solid var(--border-color);
 }
 
 .chat-input {
@@ -309,4 +475,64 @@
 
 .send-button:active:not(:disabled) {
   transform: scale(0.98);
+}
+
+.attach-button {
+  padding: 0 1rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 28px;
+  color: var(--text-secondary);
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.attach-button:hover:not(:disabled) {
+  background: var(--paytm-sky);
+  border-color: var(--paytm-blue);
+  color: var(--paytm-blue);
+}
+
+.attach-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.message-files {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.message-file-item .MuiSvgIcon-root {
+  color: var(--paytm-blue);
+}
+
+.message-file-item .file-name {
+  font-weight: 500;
+  flex: 1;
+}
+
+.message-file-item .file-size {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
 }
