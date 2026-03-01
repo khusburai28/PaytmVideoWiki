@@ -1,5 +1,11 @@
 import { useState } from 'react'
 import WarningIcon from '@mui/icons-material/Warning'
+import SettingsIcon from '@mui/icons-material/Settings'
+import AudiotrackIcon from '@mui/icons-material/Audiotrack'
+import MicIcon from '@mui/icons-material/Mic'
+import DataUsageIcon from '@mui/icons-material/DataUsage'
+import SearchIcon from '@mui/icons-material/Search'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { apiPost, apiGet } from '../utils/api'
 import './UploadVideo.css'
 
@@ -7,6 +13,7 @@ function UploadVideo({ onVideoUploaded }) {
   const [uploading, setUploading] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [statusMessage, setStatusMessage] = useState('')
   const [error, setError] = useState(null)
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
@@ -73,10 +80,12 @@ function UploadVideo({ onVideoUploaded }) {
         const data = await response.json()
 
         setProgress(data.progress)
+        setStatusMessage(data.message || 'Processing...')
 
         if (data.status === 'completed') {
           clearInterval(interval)
           setProcessing(false)
+          setStatusMessage('')
 
           // Fetch video info
           const videoResponse = await apiGet(`/api/videos`)
@@ -89,6 +98,7 @@ function UploadVideo({ onVideoUploaded }) {
         } else if (data.status === 'failed') {
           clearInterval(interval)
           setProcessing(false)
+          setStatusMessage('')
           setError(data.message || 'Processing failed')
         }
       } catch (err) {
@@ -207,19 +217,62 @@ function UploadVideo({ onVideoUploaded }) {
       ) : uploading ? (
         <div className="upload-status">
           <div className="loading-spinner"></div>
-          <p className="upload-text">Uploading KT video...</p>
+          <p className="upload-text">Uploading video to server...</p>
+          <p className="upload-hint">This should only take a few seconds</p>
         </div>
       ) : (
         <div className="upload-status">
           <div className="loading-spinner"></div>
-          <p className="upload-text">Processing video for AI search...</p>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+          <div className="status-details">
+            <p className="upload-text">{statusMessage || 'Processing video...'}</p>
+            <div className="progress-container">
+              <div className="progress-bar">
+                <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+              </div>
+              <p className="progress-text">{progress}%</p>
+            </div>
+            <div className="processing-stages">
+              <div className={`stage ${progress >= 10 ? 'completed' : ''} ${progress < 10 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <SettingsIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Initializing</span>
+              </div>
+              <div className={`stage ${progress >= 20 ? 'completed' : ''} ${progress >= 10 && progress < 40 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <AudiotrackIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Extracting Audio</span>
+              </div>
+              <div className={`stage ${progress >= 70 ? 'completed' : ''} ${progress >= 40 && progress < 70 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <MicIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Transcribing</span>
+              </div>
+              <div className={`stage ${progress >= 85 ? 'completed' : ''} ${progress >= 70 && progress < 85 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <DataUsageIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Processing</span>
+              </div>
+              <div className={`stage ${progress >= 95 ? 'completed' : ''} ${progress >= 85 && progress < 95 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <SearchIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Indexing</span>
+              </div>
+              <div className={`stage ${progress === 100 ? 'completed' : ''} ${progress >= 95 && progress < 100 ? 'active' : ''}`}>
+                <span className="stage-icon">
+                  <CheckCircleIcon sx={{ fontSize: '2rem' }} />
+                </span>
+                <span className="stage-label">Finalizing</span>
+              </div>
+            </div>
+            <p className="upload-hint">
+              This may take 2-5 minutes depending on video length
+            </p>
           </div>
-          <p className="progress-text">{progress}%</p>
-          <p className="upload-hint">
-            Transcribing and indexing content (2-5 minutes)
-          </p>
         </div>
       )}
 

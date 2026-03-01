@@ -267,3 +267,103 @@
   padding: 4rem 2rem;
   text-align: center;
 }
+
+.status-details {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.progress-container {
+  margin: 1.5rem 0;
+}
+
+.processing-stages {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 2rem 0;
+  padding: 0 1rem;
+}
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0.3;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 0;
+}
+
+.stage.active {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.stage.completed {
+  opacity: 0.6;
+}
+
+.stage-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  transition: all 0.3s ease;
+}
+
+.stage.active .stage-icon {
+  color: var(--paytm-blue);
+  opacity: 1;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.stage.completed .stage-icon {
+  color: var(--paytm-blue);
+  opacity: 0.7;
+}
+
+.stage-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.stage.active .stage-label {
+  color: var(--paytm-blue);
+  font-weight: 600;
+}
+
+.stage.completed .stage-label {
+  color: var(--text-primary);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@media (max-width: 768px) {
+  .processing-stages {
+    gap: 0.25rem;
+    padding: 0 0.5rem;
+  }
+
+  .stage-icon {
+    font-size: 1.4rem;
+  }
+
+  .stage-label {
+    font-size: 0.65rem;
+  }
+}

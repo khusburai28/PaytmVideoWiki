@@ -113,8 +113,22 @@ async def process_video_task(
         # Process video (extract audio, transcribe)
         segments, duration = video_processor.process_video(video_path, video_id)
 
+        # Update status for indexing
+        video_processor.processing_status[video_id] = {
+            "status": "indexing",
+            "progress": 85,
+            "message": "Indexing transcript for AI search..."
+        }
+
         # Index segments in Qdrant with video duration for derived chunks
         rag_engine.index_video_segments(video_id, segments, duration)
+
+        # Update status for finalizing
+        video_processor.processing_status[video_id] = {
+            "status": "finalizing",
+            "progress": 95,
+            "message": "Finalizing and saving metadata..."
+        }
 
         # Save video metadata to Qdrant
         rag_engine.save_video_metadata(
@@ -142,10 +156,24 @@ async def process_video_task(
             "team_id": team_id
         }
 
+        # Final status update
+        video_processor.processing_status[video_id] = {
+            "status": "completed",
+            "progress": 100,
+            "message": "Video ready for AI-powered search!",
+            "total_segments": len(segments)
+        }
+
         logger.info(f"Video {video_id} processed successfully")
 
     except Exception as e:
         logger.error(f"Failed to process video {video_id}: {e}")
+        video_processor.processing_status[video_id] = {
+            "status": "failed",
+            "progress": 0,
+            "error": str(e),
+            "message": f"Processing failed: {str(e)}"
+        }
         if video_id in video_metadata:
             video_metadata[video_id]["status"] = "failed"
             video_metadata[video_id]["error"] = str(e)

@@ -41,8 +41,11 @@ function VideoPlayer({ videoId, seekTime }) {
     const player = playerRef.current
 
     if (player && !player.isDisposed() && videoId) {
+      const token = localStorage.getItem('access_token')
+
+      // Add token as query parameter for authentication
       player.src({
-        src: `/api/video/${videoId}`,
+        src: `/api/video/${videoId}?token=${encodeURIComponent(token)}`,
         type: 'video/mp4',
       })
 

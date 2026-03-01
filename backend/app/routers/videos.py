@@ -9,7 +9,7 @@ from app.models.schemas import (
     VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
     VideoInfo, TimestampReference, ReportGenerationRequest
 )
-from app.middleware.auth import get_current_active_user, check_video_permission, require_team_membership
+from app.middleware.auth import get_current_active_user, check_video_permission, require_team_membership, require_team_membership_flexible
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +178,11 @@ async def chat_with_video(request: ChatRequest, current_user: dict = Depends(req
 
 
 @router.get("/video/{video_id}")
-async def get_video(video_id: str, request: Request, current_user: dict = Depends(require_team_membership)):
+async def get_video(
+    video_id: str,
+    request: Request,
+    current_user: dict = Depends(require_team_membership_flexible)
+):
     """Stream video file with range request support."""
     settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
 

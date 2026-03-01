@@ -82,8 +82,8 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
     // If it's not a string and not an array, try to extract text
     let text = typeof content === 'string' ? content : extractTextContent(content)
 
-    // Replace [MM:SS] or [HH:MM:SS] patterns with clickable timestamps
-    const timestampRegex = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g
+    // Match MM:SS or HH:MM:SS patterns (without square brackets)
+    const timestampRegex = /\b(\d{1,2}:\d{2}(?::\d{2})?)\b/g
     const parts = []
     let lastIndex = 0
     let match
@@ -104,7 +104,7 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
           onClick={() => onTimestampClick(seconds)}
           title={`Jump to ${timeStr}`}
         >
-          [{timeStr}]
+          {timeStr}
         </span>
       )
 

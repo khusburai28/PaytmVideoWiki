@@ -41,6 +41,11 @@ class VideoProcessor:
 
         try:
             logger.info(f"Extracting audio from {video_path}")
+            self.processing_status[video_id] = {
+                "status": "extracting_audio",
+                "progress": 20,
+                "message": "Extracting audio from video..."
+            }
             (
                 ffmpeg
                 .input(video_path)
@@ -130,7 +135,8 @@ class VideoProcessor:
             logger.info(f"Starting transcription for {video_id}")
             self.processing_status[video_id] = {
                 "status": "transcribing",
-                "progress": 50
+                "progress": 40,
+                "message": "Transcribing audio with Whisper AI..."
             }
 
             result = self.whisper_model.transcribe(
@@ -149,6 +155,13 @@ class VideoProcessor:
                 })
 
             logger.info(f"Transcription complete: {len(segments)} raw segments")
+
+            # Update status for merging
+            self.processing_status[video_id] = {
+                "status": "processing_segments",
+                "progress": 70,
+                "message": "Processing and merging transcript segments..."
+            }
 
             # Merge small segments into larger chunks (30 seconds minimum)
             merged_segments = self.merge_small_segments(segments, min_duration=30.0)
@@ -173,15 +186,15 @@ class VideoProcessor:
         """Complete video processing pipeline."""
         try:
             self.processing_status[video_id] = {
-                "status": "processing",
-                "progress": 10
+                "status": "initializing",
+                "progress": 10,
+                "message": "Initializing video processing..."
             }
 
             # Get video duration
             duration = self.get_video_duration(video_path)
 
             # Extract audio
-            self.processing_status[video_id]["progress"] = 30
             audio_path = self.extract_audio(video_path, video_id)
 
             # Transcribe
@@ -196,7 +209,8 @@ class VideoProcessor:
             self.processing_status[video_id] = {
                 "status": "completed",
                 "progress": 100,
-                "total_segments": len(segments)
+                "total_segments": len(segments),
+                "message": "Video processing completed successfully!"
             }
 
             return segments, duration
@@ -206,7 +220,8 @@ class VideoProcessor:
             self.processing_status[video_id] = {
                 "status": "failed",
                 "progress": 0,
-                "error": str(e)
+                "error": str(e),
+                "message": f"Processing failed: {str(e)}"
             }
             raise
 
