@@ -237,3 +237,68 @@ Guidelines:
         except Exception as e:
             logger.error(f"PDF extraction error: {e}")
             return ""
+
+    def generate_diagram(self, query: str, segments: List[Dict]) -> str:
+        """Generate a Mermaid diagram based on video content and user query."""
+        # Build context from transcript segments
+        context_text = self._build_context(segments[:50])  # Use first 50 segments for context
+
+        # Build the system prompt specifically for diagram generation
+        system_prompt = f"""You are a diagram generation assistant. Your task is to create Mermaid diagrams based on video transcript content.
+
+CRITICAL REQUIREMENTS:
+1. ONLY output valid Mermaid diagram syntax - NO explanations, NO markdown code blocks, NO additional text
+2. Start directly with the diagram type (e.g., "graph TD", "flowchart LR", "sequenceDiagram", etc.)
+3. Use proper Mermaid syntax - ensure all syntax is valid and follows Mermaid specification exactly
+4. Keep diagrams clear and focused on 5-10 main concepts maximum
+5. Use simple, alphanumeric node IDs (A, B, C or node1, node2, etc.)
+6. DO NOT wrap the diagram in ```mermaid code blocks - output raw Mermaid syntax only
+7. Test your syntax mentally before outputting - ensure it's valid Mermaid
+
+Preferred diagram types (use these unless user requests specific type):
+- flowchart TB (top to bottom flowchart - RECOMMENDED for most cases)
+- graph LR (left to right graph)
+- sequenceDiagram (for process flows with actors)
+
+AVOID unless specifically requested:
+- mindmap (often causes syntax errors)
+- complex nested structures
+
+Example of GOOD output:
+flowchart TB
+    A[Start] --> B{{Decision}}
+    B -->|Yes| C[Process]
+    B -->|No| D[End]
+    C --> D
+
+Video Transcript Content:
+{context_text}
+"""
+
+        # Build the user query
+        user_prompt = f"""Based on the video content, create a Mermaid diagram that: {query}
+
+Remember: Output ONLY the Mermaid diagram syntax. No explanations, no markdown blocks, just the raw Mermaid code."""
+
+        try:
+            # Generate diagram using Gemini
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=f"{system_prompt}\n\n{user_prompt}"
+            )
+
+            diagram_code = response.text.strip()
+
+            # Clean up the response - remove markdown code blocks if present
+            if diagram_code.startswith("```mermaid"):
+                diagram_code = diagram_code.replace("```mermaid", "").replace("```", "").strip()
+            elif diagram_code.startswith("```"):
+                diagram_code = diagram_code.replace("```", "").strip()
+
+            # Log the full diagram for debugging
+            logger.info(f"Generated Mermaid diagram:\n{diagram_code}")
+            return diagram_code
+
+        except Exception as e:
+            logger.error(f"Diagram generation error: {e}")
+            raise Exception(f"Failed to generate diagram: {str(e)}")

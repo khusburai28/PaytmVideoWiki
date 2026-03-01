@@ -347,6 +347,7 @@
   gap: 0.75rem;
 }
 
+.generate-diagram-btn,
 .generate-report-btn {
   padding: 0.65rem 1.25rem;
   background: var(--paytm-blue);
@@ -362,6 +363,7 @@
   gap: 0.5rem;
 }
 
+.generate-diagram-btn:hover,
 .generate-report-btn:hover {
   background: var(--paytm-dark-blue);
   border-color: var(--paytm-dark-blue);
@@ -369,10 +371,12 @@
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }
 
+.generate-diagram-btn:active,
 .generate-report-btn:active {
   transform: translateY(0);
 }
 
+.generate-diagram-btn:disabled,
 .generate-report-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

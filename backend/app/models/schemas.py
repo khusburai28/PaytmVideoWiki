@@ -71,6 +71,14 @@ class ReportGenerationRequest(BaseModel):
     additional_instructions: Optional[str] = None
 
 
+class DiagramGenerationRequest(BaseModel):
+    query: str = Field(..., min_length=1, description="User query for diagram generation")
+
+
+class DiagramGenerationResponse(BaseModel):
+    diagram: str = Field(..., description="Mermaid diagram syntax")
+
+
 class ErrorResponse(BaseModel):
     error: str
     detail: Optional[str] = None

@@ -9,7 +9,8 @@ import json
 
 from app.models.schemas import (
     VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
-    VideoInfo, TimestampReference, ReportGenerationRequest
+    VideoInfo, TimestampReference, ReportGenerationRequest,
+    DiagramGenerationRequest, DiagramGenerationResponse
 )
 from app.middleware.auth import get_current_active_user, check_video_permission, require_team_membership, require_team_membership_flexible
 
@@ -373,6 +374,53 @@ async def generate_video_report(
     except Exception as e:
         logger.error(f"Failed to generate report: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
+
+
+@router.post("/video/{video_id}/diagram", response_model=DiagramGenerationResponse)
+async def generate_video_diagram(
+    video_id: str,
+    request: DiagramGenerationRequest,
+    current_user: dict = Depends(require_team_membership)
+):
+    """Generate a Mermaid diagram based on video content and user query."""
+    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+
+    try:
+        # Get video metadata
+        metadata = rag_engine.get_video_metadata(video_id)
+        if not metadata:
+            raise HTTPException(status_code=404, detail="Video not found")
+
+        # Get full transcript segments (same as report generation)
+        results = rag_engine.qdrant_client.scroll(
+            collection_name=rag_engine.collection_name,
+            scroll_filter=Filter(
+                must=[
+                    FieldCondition(key="video_id", match=MatchValue(value=video_id)),
+                    FieldCondition(key="chunk_type", match=MatchValue(value="regular"))
+                ]
+            ),
+            limit=10000,
+            with_payload=True,
+            with_vectors=False
+        )
+
+        segments = [r.payload for r in results[0]]
+        segments.sort(key=lambda x: x['start_time'])
+
+        # Generate Mermaid diagram using Gemini
+        diagram_code = gemini_client.generate_diagram(
+            query=request.query,
+            segments=segments
+        )
+
+        return DiagramGenerationResponse(diagram=diagram_code)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to generate diagram: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate diagram: {str(e)}")
 
 
 @router.delete("/video/{video_id}")

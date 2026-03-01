@@ -1,0 +1,81 @@
+.diagram-modal-content {
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.diagram-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.diagram-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.diagram-header h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.diagram-content {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.diagram-content svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.diagram-error {
+  color: #dc2626;
+  padding: 1rem;
+  background: #fee;
+  border-radius: 6px;
+  border: 1px solid #fcc;
+}
+
+.diagram-error p {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.diagram-error pre {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.diagram-error details {
+  margin-top: 0.75rem;
+}
+
+.diagram-error summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  user-select: none;
+}
+
+.diagram-error summary:hover {
+  color: #991b1b;
+}

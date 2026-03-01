@@ -6,8 +6,10 @@ import VideoSidebar from './components/VideoSidebar'
 import Login from './components/Login'
 import AdminPanel from './components/AdminPanel'
 import ReportModal from './components/ReportModal'
+import DiagramModal from './components/DiagramModal'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DescriptionIcon from '@mui/icons-material/Description'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import LogoutIcon from '@mui/icons-material/Logout'
 import GroupsIcon from '@mui/icons-material/Groups'
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
@@ -28,6 +30,9 @@ function App() {
   const [currentView, setCurrentView] = useState('videos') // 'videos' or 'admin'
   const [showAIPanel, setShowAIPanel] = useState(false) // AI chat panel visibility
   const [showReportModal, setShowReportModal] = useState(false) // Report modal visibility
+  const [showDiagramModal, setShowDiagramModal] = useState(false) // Diagram modal visibility
+  const [generatingDiagram, setGeneratingDiagram] = useState(false)
+  const [diagramData, setDiagramData] = useState(null)
 
   const handleVideoUploaded = (videoInfo) => {
     setCurrentVideo(videoInfo)
@@ -86,6 +91,29 @@ function App() {
       alert('Failed to generate report. Please try again.')
     } finally {
       setGeneratingReport(false)
+    }
+  }
+
+  const handleGenerateDiagram = async (query) => {
+    setGeneratingDiagram(true)
+    setDiagramData(null)
+    try {
+      const response = await apiPost(
+        `/api/video/${currentVideo.video_id}/diagram`,
+        { query }
+      )
+
+      if (!response.ok) {
+        throw new Error('Failed to generate diagram')
+      }
+
+      const data = await response.json()
+      setDiagramData(data.diagram)
+    } catch (error) {
+      console.error('Failed to generate diagram:', error)
+      alert('Failed to generate diagram. Please try again.')
+    } finally {
+      setGeneratingDiagram(false)
     }
   }
 
@@ -318,6 +346,14 @@ function App() {
                         </button>
                       )}
                       <button
+                        className="generate-diagram-btn"
+                        onClick={() => setShowDiagramModal(true)}
+                        disabled={generatingDiagram}
+                      >
+                        <AccountTreeIcon sx={{ fontSize: '1.1rem' }} />
+                        Generate Diagram
+                      </button>
+                      <button
                         className="generate-report-btn"
                         onClick={() => setShowReportModal(true)}
                         disabled={generatingReport}
@@ -397,6 +433,21 @@ function App() {
           onGenerate={handleGenerateReport}
           videoName={currentVideo.name || currentVideo.filename}
           isGenerating={generatingReport}
+        />
+      )}
+
+      {/* Diagram Generation Modal */}
+      {currentVideo && (
+        <DiagramModal
+          isOpen={showDiagramModal}
+          onClose={() => {
+            setShowDiagramModal(false)
+            setDiagramData(null)
+          }}
+          onGenerate={handleGenerateDiagram}
+          videoName={currentVideo.name || currentVideo.filename}
+          isGenerating={generatingDiagram}
+          diagramData={diagramData}
         />
       )}
     </div>
