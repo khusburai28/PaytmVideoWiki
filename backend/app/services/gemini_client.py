@@ -266,19 +266,36 @@ AVOID unless specifically requested:
 
 Example of GOOD output:
 flowchart TB
-    A[Start] --> B{{Decision}}
+    A[Start] --> B[Check Condition]
     B -->|Yes| C[Process]
     B -->|No| D[End]
     C --> D
+
+CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
+- ALWAYS use --> for connecting nodes (arrow with head)
+- NEVER use -- or --- alone - these cause syntax errors
+- For labels on arrows: -->|Label Text|
+- Node shapes: ONLY use [square brackets] for labels - do NOT use (parentheses) in labels
+- Keep node IDs simple: A, B, C or node1, node2
+- Avoid special characters in labels: NO parentheses, NO curly braces, NO pipes
+- Use simple alphanumeric text and spaces only in labels
+- ALWAYS use [square brackets] for all node labels
+- Each connection MUST have --> with an arrowhead
+- Keep the diagram simple - max 10 nodes total
+- For decision nodes, use text like "Is it X?" instead of shapes
 
 Video Transcript Content:
 {context_text}
 """
 
         # Build the user query
-        user_prompt = f"""Based on the video content, create a Mermaid diagram that: {query}
+        user_prompt = f"""Based on the video content, create a FLOWCHART diagram that: {query}
 
-Remember: Output ONLY the Mermaid diagram syntax. No explanations, no markdown blocks, just the raw Mermaid code."""
+IMPORTANT:
+- Use "flowchart TB" or "flowchart LR" format ONLY
+- DO NOT use mindmap, timeline, or other complex formats
+- Output ONLY the Mermaid flowchart syntax
+- No explanations, no markdown blocks, just the raw Mermaid code"""
 
         try:
             # Generate diagram using Gemini
@@ -294,6 +311,31 @@ Remember: Output ONLY the Mermaid diagram syntax. No explanations, no markdown b
                 diagram_code = diagram_code.replace("```mermaid", "").replace("```", "").strip()
             elif diagram_code.startswith("```"):
                 diagram_code = diagram_code.replace("```", "").strip()
+
+            # Fix common syntax errors
+            # Replace --- with --> and -- with --> to fix connection syntax
+            lines = diagram_code.split('\n')
+            fixed_lines = []
+            for line in lines:
+                # Skip empty lines with just --
+                if line.strip() == '--' or line.strip() == '---':
+                    continue
+                # Replace --- with -->
+                line = line.replace(' --- ', ' --> ')
+                # Replace standalone -- with -->
+                line = line.replace(' -- ', ' --> ')
+
+                # Remove parentheses from node labels to avoid syntax conflicts
+                # Replace (text) with text in square bracket labels
+                import re
+                # Match patterns like [Text (Detail)] and replace with [Text - Detail]
+                line = re.sub(r'\[([^\]]*)\(([^\)]+)\)([^\]]*)\]', r'[\1\2\3]', line)
+                # Also handle the case where parentheses might remain
+                line = line.replace('(', '').replace(')', '')
+
+                fixed_lines.append(line)
+
+            diagram_code = '\n'.join(fixed_lines)
 
             # Log the full diagram for debugging
             logger.info(f"Generated Mermaid diagram:\n{diagram_code}")

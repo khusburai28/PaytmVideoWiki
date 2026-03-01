@@ -6,6 +6,7 @@ import './DiagramModal.css'
 
 function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, diagramData }) {
   const [query, setQuery] = useState('')
+  const [renderError, setRenderError] = useState(null)
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -86,7 +87,24 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
                 <h4>Generated Diagram</h4>
               </div>
               <div className="diagram-content">
-                <Mermaid chart={diagramData} />
+                {renderError ? (
+                  <div className="diagram-error">
+                    <p>Failed to render diagram</p>
+                    <p style={{ fontSize: '0.9rem', marginTop: '0.5rem' }}>Error: {renderError}</p>
+                    <details style={{ marginTop: '1rem' }}>
+                      <summary>Diagram Code</summary>
+                      <pre style={{ fontSize: '0.85rem', overflow: 'auto' }}>{diagramData}</pre>
+                    </details>
+                  </div>
+                ) : (
+                  <Mermaid
+                    chart={diagramData}
+                    onError={(error) => {
+                      console.error('Mermaid render error:', error)
+                      setRenderError(error.message || 'Unknown error')
+                    }}
+                  />
+                )}
               </div>
             </div>
           )}
