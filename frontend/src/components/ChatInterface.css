@@ -46,7 +46,6 @@
   margin-bottom: 1rem;
   color: var(--text-primary);
   font-size: 0.95rem;
-  line-height: 1.6;
 }
 
 .example-questions {
@@ -71,7 +70,6 @@
 .example-questions li {
   color: var(--text-secondary);
   margin-bottom: 0.5rem;
-  line-height: 1.5;
   font-size: 0.9rem;
 }
 
@@ -125,8 +123,8 @@
 }
 
 .message-text {
-  line-height: 1.7;
   white-space: pre-wrap;
+  line-height: 1.4;
 }
 
 /* Markdown formatting in assistant messages */
@@ -137,12 +135,10 @@
 .message.assistant .message-text ul,
 .message.assistant .message-text ol {
   margin: 0;
-  padding-left: 1.5rem;
 }
 
 .message.assistant .message-text li {
   margin: 0;
-  line-height: 1.5;
   display: block;
 }
 
@@ -416,7 +412,6 @@
   resize: none;
   min-height: 50px;
   max-height: 120px;
-  line-height: 1.5;
   transition: all 0.2s ease;
 }
 

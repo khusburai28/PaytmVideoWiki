@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings
 from typing import Optional
 from datetime import datetime
 import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 from app.services.video_processor import VideoProcessor
 from app.services.rag_engine import RAGEngine
@@ -14,10 +16,32 @@ from app.services.auth_service import AuthService
 # Import routers
 from app.routers import auth, teams, videos, users
 
-# Configure logging
+# Configure logging with file rotation
+os.makedirs("logs", exist_ok=True)
+
+# File handler with rotation (10MB per file, keep 5 backups)
+file_handler = RotatingFileHandler(
+    'logs/app.log',
+    maxBytes=10*1024*1024,  # 10MB
+    backupCount=5
+)
+file_handler.setLevel(logging.INFO)
+
+# Console handler for Docker logs
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+# Formatter
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Configure root logger
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    handlers=[file_handler, console_handler]
 )
 logger = logging.getLogger(__name__)
 
@@ -55,6 +79,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request/Response logging middleware
+from app.middleware.logging_middleware import RequestResponseLoggingMiddleware
+app.add_middleware(RequestResponseLoggingMiddleware)
 
 # Load settings
 try:

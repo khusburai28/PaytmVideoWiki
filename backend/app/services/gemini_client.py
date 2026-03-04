@@ -68,10 +68,18 @@ Answer concisely using the video content. Keep it brief and natural."""
                 full_prompt = f"{system_prompt}\n\n{user_prompt}"
 
             # Generate response using new API
+            logger.info("="*50)
+            logger.info(f"[Gemini API Request] Full Prompt:\n{full_prompt}...")
+            logger.info("="*50)
+
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=full_prompt
             )
+
+            logger.info(f"[Gemini API Response] Status: Success | Response length: {len(response.text)} chars")
+            logger.debug(f"[Gemini API Response] Full response:\n{response.text[:500]}...")
+
             return response.text
 
         except Exception as e:
@@ -121,10 +129,14 @@ Answer concisely using the video content. Keep it brief and natural."""
     def generate_content(self, prompt: str) -> str:
         """Generate content using Gemini for report generation."""
         try:
+            logger.info(f"[Gemini API - Report] Generating content with prompt length: {len(prompt)} chars")
+
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=prompt
             )
+
+            logger.info(f"[Gemini API - Report] Response received: {len(response.text)} chars")
             return response.text
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
@@ -210,11 +222,15 @@ Guidelines:
             # Create content with both text and file parts
             contents = [types.Part(text=system_prompt)] + content_parts + [types.Part(text=user_prompt)]
 
+            logger.info(f"[Gemini API - Files] Sending request with {len(files)} files and {len(content_parts)} content parts")
+
             # Generate response
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=contents
             )
+
+            logger.info(f"[Gemini API - Files] Response received: {len(response.text)} chars")
             return response.text
 
         except Exception as e:
