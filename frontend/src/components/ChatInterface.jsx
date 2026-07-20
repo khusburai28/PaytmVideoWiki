@@ -223,9 +223,9 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
         <div className="chat-header">
           <h2>
             <SmartToyIcon sx={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-            AI Learning Assistant
+            Industrial Knowledge Copilot
           </h2>
-          <p>Get instant answers from the KT session</p>
+          <p>Ask across asset history, operating context, and evidence sources</p>
         </div>
       )}
 
@@ -234,16 +234,16 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
           <div className="welcome-message">
             <p>
               <WavingHandIcon sx={{ fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem' }} />
-              Welcome to your KT Video Assistant!
+              Welcome to your Industrial Knowledge Copilot.
             </p>
-            <p>I'm here to help you learn from this knowledge transfer video. Ask me anything about the content, and I'll provide answers with precise timestamps!</p>
+            <p>Ask about asset behavior, failure patterns, safety procedures, compliance evidence, or lessons learned. I will answer with cited moments from the indexed record.</p>
             <div className="example-questions">
               <p><strong>Example questions:</strong></p>
               <ul>
-                <li>"What technologies are covered in this session?"</li>
-                <li>"How do I set up the development environment?"</li>
-                <li>"Explain the architecture discussed"</li>
-                <li>"What are the best practices mentioned?"</li>
+                <li>"Which asset tags and process parameters are mentioned?"</li>
+                <li>"Summarize possible failure modes and recommended checks."</li>
+                <li>"What compliance or safety evidence can I cite for an audit?"</li>
+                <li>"Create a shift handover brief with risks and next actions."</li>
               </ul>
             </div>
           </div>

@@ -36,15 +36,15 @@ function VideoSidebar({ videos, currentVideo, onVideoSelect }) {
       <div className="sidebar-header">
         <h2>
           <VideoLibraryIcon sx={{ fontSize: '1.3rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
-          KT Videos
+          Asset Records
         </h2>
       </div>
 
       <div className="sidebar-videos">
         {videos.length === 0 ? (
           <div className="sidebar-empty">
-            <p>No videos yet</p>
-            <p className="sidebar-empty-hint">Upload your first KT video to get started</p>
+            <p>No records indexed yet</p>
+            <p className="sidebar-empty-hint">Ingest your first operational evidence file to get started</p>
           </div>
         ) : (
           videos.map(video => (
@@ -80,7 +80,7 @@ function VideoSidebar({ videos, currentVideo, onVideoSelect }) {
               {expandedVideo === video.video_id && (
                 <div className="sidebar-video-details">
                   <p className="sidebar-video-description">
-                    {video.description || 'No description'}
+                    {video.description || 'No operational context'}
                   </p>
                   <div className="sidebar-video-meta">
                     {video.author_name && (
@@ -101,7 +101,7 @@ function VideoSidebar({ videos, currentVideo, onVideoSelect }) {
                       <span className="meta-icon">
                         <BarChartIcon sx={{ fontSize: '0.9rem' }} />
                       </span>
-                      <span>{video.total_segments} segments</span>
+                      <span>{video.total_segments} evidence segments</span>
                     </div>
                     <div className="sidebar-meta-item">
                       <span className="meta-icon">

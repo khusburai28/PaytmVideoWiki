@@ -3,13 +3,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #002E5F 0%, #00BAF2 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 52%, #0F766E 100%);
   padding: 2rem;
 }
 
 .login-box {
   background: white;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 450px;
   width: 100%;
@@ -19,7 +19,7 @@
 .login-header {
   text-align: center;
   padding: 2.5rem 2rem 2rem;
-  background: linear-gradient(135deg, #002E5F 0%, #00536D 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 100%);
   color: white;
 }
 
@@ -60,7 +60,7 @@
 }
 
 .tab.active {
-  color: #00BAF2;
+  color: #2563EB;
 }
 
 .tab.active::after {
@@ -70,7 +70,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: #00BAF2;
+  background: #2563EB;
 }
 
 .tab:hover:not(.active) {
@@ -106,8 +106,8 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #00BAF2;
-  box-shadow: 0 0 0 3px rgba(0, 186, 242, 0.1);
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .password-hint {
@@ -130,7 +130,7 @@
 .submit-btn {
   width: 100%;
   padding: 1rem;
-  background: #00BAF2;
+  background: #2563EB;
   color: white;
   border: none;
   border-radius: 8px;
@@ -141,9 +141,9 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #002E5F;
+  background: #0F172A;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
 }
 
 .submit-btn:disabled {
@@ -156,16 +156,16 @@
   margin-top: 1.5rem;
   padding: 1rem;
   background: #F0F9FF;
-  border: 1px solid #00BAF2;
+  border: 1px solid #2563EB;
   border-radius: 8px;
   font-size: 0.85rem;
 }
 
 .default-admin-info p {
   margin: 0.25rem 0;
-  color: #002E5F;
+  color: #1E3A8A;
 }
 
 .default-admin-info strong {
-  color: #00BAF2;
+  color: #2563EB;
 }

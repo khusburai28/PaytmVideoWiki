@@ -24,7 +24,7 @@ function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
         <div className="modal-header">
           <h3>
             <DescriptionIcon sx={{ fontSize: '1.2rem' }} />
-            Generate Report
+            Generate Evidence Pack
           </h3>
           <button className="modal-close-btn" onClick={handleClose}>
             <CloseIcon sx={{ fontSize: '1.2rem' }} />
@@ -33,7 +33,7 @@ function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
 
         <div className="modal-body">
           <p className="modal-description">
-            Generate a comprehensive PDF report for <strong>{videoName}</strong>
+            Generate a maintenance, compliance, or audit-ready evidence pack for <strong>{videoName}</strong>
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -44,14 +44,14 @@ function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
               <textarea
                 id="instructions"
                 className="modal-textarea"
-                placeholder="e.g., Focus on security best practices, Include code examples, Highlight deployment steps..."
+                placeholder="e.g., Focus on RCA evidence, include compliance gaps, highlight safety-critical follow-ups..."
                 value={additionalInstructions}
                 onChange={(e) => setAdditionalInstructions(e.target.value)}
                 rows={4}
                 disabled={isGenerating}
               />
               <p className="form-hint">
-                Add any specific topics or areas you'd like the report to focus on
+                Add any asset, regulation, failure mode, or audit scope you want the evidence pack to focus on
               </p>
             </div>
 
@@ -70,7 +70,7 @@ function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
                 disabled={isGenerating}
               >
                 <DescriptionIcon sx={{ fontSize: '1rem' }} />
-                {isGenerating ? 'Generating...' : 'Generate Report'}
+                {isGenerating ? 'Generating...' : 'Generate Evidence Pack'}
               </button>
             </div>
           </form>

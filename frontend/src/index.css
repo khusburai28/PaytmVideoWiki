@@ -5,19 +5,19 @@
 }
 
 :root {
-  /* Paytm Brand Colors */
-  --paytm-blue: #00BAF2;
-  --paytm-dark-blue: #002E6E;
-  --paytm-light-blue: #00D9FF;
-  --paytm-navy: #003D82;
-  --paytm-sky: #E6F7FF;
+  /* Industrial Intelligence Brand Colors */
+  --paytm-blue: #2563EB;
+  --paytm-dark-blue: #0F172A;
+  --paytm-light-blue: #14B8A6;
+  --paytm-navy: #1E3A8A;
+  --paytm-sky: #E0F2FE;
 
   /* UI Colors */
   --bg-primary: #FFFFFF;
-  --bg-secondary: #F5F5F5;
-  --bg-tertiary: #E8F4F8;
-  --text-primary: #1a1a1a;
-  --text-secondary: #5E6268;
+  --bg-secondary: #F4F7FB;
+  --bg-tertiary: #EAF0F7;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
   --text-tertiary: #8A8A8A;
   --border-color: #E0E0E0;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);

@@ -27,7 +27,7 @@ function UploadVideo({ onVideoUploaded }) {
     // Validate file type
     const validTypes = ['video/mp4', 'video/avi', 'video/quicktime', 'video/x-matroska', 'video/webm']
     if (!validTypes.includes(file.type)) {
-      setError('Invalid file type. Please upload MP4, AVI, MOV, MKV, or WEBM.')
+      setError('Invalid file type. Please upload MP4, AVI, MOV, MKV, or WEBM evidence.')
       return
     }
 
@@ -143,7 +143,7 @@ function UploadVideo({ onVideoUploaded }) {
 
   return (
     <div className="upload-container">
-      <h2>Upload Knowledge Transfer Video</h2>
+      <h2>Ingest Industrial Knowledge Evidence</h2>
 
       {!showForm && !uploading && !processing ? (
         <div
@@ -160,44 +160,48 @@ function UploadVideo({ onVideoUploaded }) {
             onChange={handleFileInput}
             style={{ display: 'none' }}
           />
-          <div className="upload-icon">📹</div>
+          <div className="upload-icon">
+            <DataUsageIcon sx={{ fontSize: '4rem' }} />
+          </div>
           <p className="upload-text">
-            Drag and drop your KT video here, or{' '}
+            Drop a field walkthrough, inspection recording, or operator briefing here, or{' '}
             <label htmlFor="video-upload" className="upload-link">
               browse
             </label>
           </p>
           <p className="upload-hint">
-            Supported formats: MP4, AVI, MOV, MKV, WEBM (max 5GB)
+            Current demo supports video evidence: MP4, AVI, MOV, MKV, WEBM (max 5GB)
           </p>
         </div>
       ) : showForm && !uploading && !processing ? (
         <form onSubmit={handleUpload} className="video-metadata-form">
           <div className="selected-file">
-            <span className="file-icon">📄</span>
+            <span className="file-icon">
+              <DataUsageIcon sx={{ fontSize: '1.4rem' }} />
+            </span>
             <span className="file-name">{selectedFile?.name}</span>
           </div>
 
           <div className="form-group">
-            <label htmlFor="video-name">Video Title *</label>
+            <label htmlFor="video-name">Asset / Evidence Title *</label>
             <input
               type="text"
               id="video-name"
               value={videoName}
               onChange={(e) => setVideoName(e.target.value)}
-              placeholder="e.g., React Hooks Deep Dive"
+              placeholder="e.g., Boiler B-102 annual shutdown inspection"
               maxLength={200}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="video-description">Description *</label>
+            <label htmlFor="video-description">Operational Context *</label>
             <textarea
               id="video-description"
               value={videoDescription}
               onChange={(e) => setVideoDescription(e.target.value)}
-              placeholder="Brief description of what this video covers..."
+              placeholder="Mention asset tags, area, failure mode, inspection scope, safety constraints, or compliance references..."
               rows={4}
               maxLength={1000}
               required
@@ -210,21 +214,21 @@ function UploadVideo({ onVideoUploaded }) {
               Cancel
             </button>
             <button type="submit" className="btn-upload">
-              Upload & Process
+              Ingest & Index
             </button>
           </div>
         </form>
       ) : uploading ? (
         <div className="upload-status">
           <div className="loading-spinner"></div>
-          <p className="upload-text">Uploading video to server...</p>
-          <p className="upload-hint">This should only take a few seconds</p>
+          <p className="upload-text">Uploading operational evidence...</p>
+          <p className="upload-hint">The asset brain will start indexing as soon as upload completes</p>
         </div>
       ) : (
         <div className="upload-status">
           <div className="loading-spinner"></div>
           <div className="status-details">
-            <p className="upload-text">{statusMessage || 'Processing video...'}</p>
+            <p className="upload-text">{statusMessage || 'Processing operational evidence...'}</p>
             <div className="progress-container">
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%` }}></div>
@@ -242,25 +246,25 @@ function UploadVideo({ onVideoUploaded }) {
                 <span className="stage-icon">
                   <AudiotrackIcon sx={{ fontSize: '2rem' }} />
                 </span>
-                <span className="stage-label">Extracting Audio</span>
+                <span className="stage-label">Extracting Signals</span>
               </div>
               <div className={`stage ${progress >= 70 ? 'completed' : ''} ${progress >= 40 && progress < 70 ? 'active' : ''}`}>
                 <span className="stage-icon">
                   <MicIcon sx={{ fontSize: '2rem' }} />
                 </span>
-                <span className="stage-label">Transcribing</span>
+                <span className="stage-label">Transcribing Evidence</span>
               </div>
               <div className={`stage ${progress >= 85 ? 'completed' : ''} ${progress >= 70 && progress < 85 ? 'active' : ''}`}>
                 <span className="stage-icon">
                   <DataUsageIcon sx={{ fontSize: '2rem' }} />
                 </span>
-                <span className="stage-label">Processing</span>
+                <span className="stage-label">Building Context</span>
               </div>
               <div className={`stage ${progress >= 95 ? 'completed' : ''} ${progress >= 85 && progress < 95 ? 'active' : ''}`}>
                 <span className="stage-icon">
                   <SearchIcon sx={{ fontSize: '2rem' }} />
                 </span>
-                <span className="stage-label">Indexing</span>
+                <span className="stage-label">Graph Indexing</span>
               </div>
               <div className={`stage ${progress === 100 ? 'completed' : ''} ${progress >= 95 && progress < 100 ? 'active' : ''}`}>
                 <span className="stage-icon">
@@ -270,7 +274,7 @@ function UploadVideo({ onVideoUploaded }) {
               </div>
             </div>
             <p className="upload-hint">
-              This may take 2-5 minutes depending on video length
+              This may take 2-5 minutes depending on evidence length
             </p>
           </div>
         </div>
@@ -286,13 +290,13 @@ function UploadVideo({ onVideoUploaded }) {
       )}
 
       <div className="info-section">
-        <h3>🎓 For Developers & New Joiners</h3>
+        <h3>Industrial Intelligence Workflow</h3>
         <ol>
-          <li>Upload your KT video securely to Paytm's platform</li>
-          <li>AI transcribes and indexes the content automatically</li>
-          <li>Ask questions about the video and get instant answers</li>
-          <li>Jump to specific topics with clickable timestamps</li>
-          <li>Perfect for onboarding, training, and knowledge sharing</li>
+          <li>Ingest videos today, then extend the same pipeline to PDFs, P&IDs, work orders, spreadsheets, and emails.</li>
+          <li>Extract asset tags, failure modes, process parameters, people, dates, and regulatory references.</li>
+          <li>Build a searchable knowledge layer with citations, timestamps, and confidence-aware answers.</li>
+          <li>Generate RCA briefs, maintenance recommendations, compliance evidence packs, and lessons learned.</li>
+          <li>Serve field technicians, engineers, quality teams, and auditors from the same operational memory.</li>
         </ol>
       </div>
     </div>

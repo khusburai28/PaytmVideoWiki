@@ -28,7 +28,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
         <div className="modal-header">
           <h3>
             <AccountTreeIcon sx={{ fontSize: '1.2rem' }} />
-            Generate Diagram
+            Generate Knowledge Graph
           </h3>
           <button className="modal-close-btn" onClick={handleClose}>
             <CloseIcon sx={{ fontSize: '1.2rem' }} />
@@ -37,18 +37,18 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
 
         <div className="modal-body">
           <p className="modal-description">
-            Generate a visual diagram from <strong>{videoName}</strong>
+            Generate an asset relationship, process flow, or RCA graph from <strong>{videoName}</strong>
           </p>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label htmlFor="diagram-query">
-                What would you like to visualize?
+                What operational relationship should be visualized?
               </label>
               <textarea
                 id="diagram-query"
                 className="modal-textarea"
-                placeholder="e.g., Show the system architecture, Create a flowchart of the process, Visualize the component relationships..."
+                placeholder="e.g., Map asset tags to failure modes, show the shutdown workflow, visualize inspection findings and RCA hypotheses..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 rows={3}
@@ -56,7 +56,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
                 required
               />
               <p className="form-hint">
-                Describe what you want to see in the diagram
+                Describe the asset, process, compliance, or incident relationship you want to see
               </p>
             </div>
 
@@ -75,7 +75,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
                 disabled={isGenerating || !query.trim()}
               >
                 <AccountTreeIcon sx={{ fontSize: '1rem' }} />
-                {isGenerating ? 'Generating...' : 'Generate Diagram'}
+                {isGenerating ? 'Generating...' : 'Generate Graph'}
               </button>
             </div>
           </form>
@@ -84,7 +84,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
           {diagramData && (
             <div className="diagram-container">
               <div className="diagram-header">
-                <h4>Generated Diagram</h4>
+                <h4>Generated Knowledge Graph</h4>
               </div>
               <div className="diagram-content">
                 {renderError ? (

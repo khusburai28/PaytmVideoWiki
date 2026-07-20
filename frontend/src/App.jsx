@@ -20,6 +20,40 @@ import CloseIcon from '@mui/icons-material/Close'
 import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
+const intelligenceModules = [
+  {
+    title: 'Universal Ingestion',
+    description: 'Index field videos, procedures, inspection notes, OEM references, drawings, and audit evidence into one searchable asset memory.',
+    metric: '7-12',
+    label: 'systems unified'
+  },
+  {
+    title: 'Asset Knowledge Graph',
+    description: 'Connect equipment tags, people, dates, process parameters, incidents, work orders, and regulatory clauses across every record.',
+    metric: '360',
+    label: 'asset context'
+  },
+  {
+    title: 'Maintenance & RCA',
+    description: 'Surface prior failures, inspection trends, troubleshooting paths, and recommended next actions before downtime escalates.',
+    metric: '18-22%',
+    label: 'downtime risk'
+  },
+  {
+    title: 'Compliance Intelligence',
+    description: 'Map procedures and evidence to Factory Act, OISD, PESO, environmental, quality, and customer audit requirements.',
+    metric: 'live',
+    label: 'audit readiness'
+  }
+]
+
+const industrialPrompts = [
+  'Which assets have repeated seal failures and what evidence supports the pattern?',
+  'Create an RCA brief for Pump P-204 using prior inspection and maintenance context.',
+  'Show compliance gaps against PESO and OISD requirements for this operating area.',
+  'What lessons learned should the shift team know before restarting the line?'
+]
+
 function App() {
   const [currentVideo, setCurrentVideo] = useState(null)
   const [videoTime, setVideoTime] = useState(0)
@@ -78,7 +112,7 @@ function App() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${currentVideo.name || 'video'}_report.pdf`
+      a.download = `${currentVideo.name || 'asset-record'}_intelligence_report.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -118,7 +152,7 @@ function App() {
   }
 
   const handleDeleteVideo = async (videoId) => {
-    if (!confirm('Are you sure you want to delete this video? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this knowledge record? This action cannot be undone.')) {
       return
     }
 
@@ -137,10 +171,10 @@ function App() {
       // Reload video list
       loadVideos()
 
-      alert('Video deleted successfully')
+      alert('Knowledge record deleted successfully')
     } catch (error) {
-      console.error('Failed to delete video:', error)
-      alert('Failed to delete video. Please try again.')
+      console.error('Failed to delete knowledge record:', error)
+      alert('Failed to delete knowledge record. Please try again.')
     }
   }
 
@@ -150,7 +184,8 @@ function App() {
     try {
       const response = await apiGet('/api/videos')
       const data = await response.json()
-      setVideos(data.filter(v => v.status === 'completed'))
+      const records = Array.isArray(data) ? data : (data.videos || data.records || [])
+      setVideos(records.filter(v => v.status === 'completed'))
     } catch (error) {
       console.error('Failed to load videos:', error)
     }
@@ -216,8 +251,8 @@ function App() {
           <div className="header-content">
             <div className="header-logo">
               <div>
-                <h1>Knowledge Transfer Hub</h1>
-                <p>Your onboarding & learning companion</p>
+                <h1>AssetOps Brain</h1>
+                <p>Industrial knowledge intelligence for safer, faster operations</p>
               </div>
             </div>
             <div className="header-user-info">
@@ -236,9 +271,9 @@ function App() {
         </header>
         <div className="team-required-container">
           <div className="team-required-card">
-            <GroupsIcon sx={{ fontSize: '4rem', color: '#00BAF2', marginBottom: '1rem' }} />
+            <GroupsIcon sx={{ fontSize: '4rem', color: '#2563EB', marginBottom: '1rem' }} />
             <h2>Team Membership Required</h2>
-            <p>You must be part of a team to access the Knowledge Transfer Hub.</p>
+            <p>You must be part of a plant, project, or function team to access AssetOps Brain.</p>
             <p className="contact-message">
               Please contact your <strong>Team Lead</strong> or <strong>Admin</strong> to be added to a team.
             </p>
@@ -257,11 +292,11 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-logo">
-            {/* <img src="/logo.svg" alt="Paytm Logo" className="paytm-logo-img" />
+            {/* <img src="/logo.svg" alt="AssetOps Logo" className="paytm-logo-img" />
             <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div> */}
             <div>
-              <h1>Knowledge Transfer Hub</h1>
-              <p>Your onboarding & learning companion</p>
+              <h1>AssetOps Brain</h1>
+              <p>Unified Asset & Operations Intelligence</p>
             </div>
           </div>
           <div className="header-user-info">
@@ -272,7 +307,7 @@ function App() {
                   onClick={() => setCurrentView('videos')}
                 >
                   <VideoLibraryIcon sx={{ fontSize: '1rem' }} />
-                  Videos
+                  Asset Records
                 </button>
                 <button
                   className={`toggle-btn ${currentView === 'admin' ? 'active' : ''}`}
@@ -319,7 +354,50 @@ function App() {
             <div className="main-content">
               {!currentVideo ? (
                 <div className="upload-section">
+                  <section className="ops-hero">
+                    <div className="ops-hero-copy">
+                      <span className="ops-eyebrow">Industrial Intelligence / Knowledge Engineering</span>
+                      <h2>Turn fragmented plant knowledge into one operational brain.</h2>
+                      <p>
+                        Ingest operational evidence, extract asset context, and let teams query maintenance,
+                        safety, quality, and compliance knowledge at the point of need.
+                      </p>
+                    </div>
+                    <div className="ops-signal-panel">
+                      <div>
+                        <span className="signal-value">35%</span>
+                        <span className="signal-label">time lost searching for information</span>
+                      </div>
+                      <div>
+                        <span className="signal-value">25%</span>
+                        <span className="signal-label">experienced engineers retiring this decade</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="module-grid">
+                    {intelligenceModules.map((module) => (
+                      <article className="module-card" key={module.title}>
+                        <div className="module-stat">
+                          <span>{module.metric}</span>
+                          <small>{module.label}</small>
+                        </div>
+                        <h3>{module.title}</h3>
+                        <p>{module.description}</p>
+                      </article>
+                    ))}
+                  </section>
+
                   <UploadVideo onVideoUploaded={handleVideoUploaded} />
+
+                  <section className="prompt-bank">
+                    <h3>Copilot queries your demo can answer</h3>
+                    <div className="prompt-grid">
+                      {industrialPrompts.map((prompt) => (
+                        <div className="prompt-chip" key={prompt}>{prompt}</div>
+                      ))}
+                    </div>
+                  </section>
                 </div>
               ) : (
                 <div className={`player-interface ${!showAIPanel ? 'ai-panel-closed' : ''}`}>
@@ -342,7 +420,7 @@ function App() {
                           onClick={() => setShowAIPanel(true)}
                         >
                           <SmartToyIcon sx={{ fontSize: '1.1rem' }} />
-                          Ask AI
+                          Ask Copilot
                         </button>
                       )}
                       <button
@@ -351,7 +429,7 @@ function App() {
                         disabled={generatingDiagram}
                       >
                         <AccountTreeIcon sx={{ fontSize: '1.1rem' }} />
-                        Generate Diagram
+                        Knowledge Graph
                       </button>
                       <button
                         className="generate-report-btn"
@@ -359,7 +437,7 @@ function App() {
                         disabled={generatingReport}
                       >
                         <DescriptionIcon sx={{ fontSize: '1.1rem' }} />
-                        Generate Report
+                        Evidence Pack
                       </button>
                       <button
                         className="delete-video-btn"
@@ -367,11 +445,11 @@ function App() {
                         disabled={generatingReport}
                       >
                         <DeleteIcon sx={{ fontSize: '1.1rem' }} />
-                        Delete Video
+                        Delete Record
                       </button>
                     </div>
                     <div className="video-details-section">
-                      <h4 className="video-details-heading">Description</h4>
+                      <h4 className="video-details-heading">Operational Context</h4>
                       <p className="video-details-description">
                         {currentVideo.description || 'No description available'}
                       </p>
@@ -379,13 +457,13 @@ function App() {
                         {currentVideo.author_name && (
                           <div className="video-meta-item">
                             <PersonIcon sx={{ fontSize: '1rem' }} />
-                            <span className="meta-label">Author:</span>
+                            <span className="meta-label">Owner:</span>
                             <span className="meta-value">{currentVideo.author_name}</span>
                           </div>
                         )}
                         <div className="video-meta-item">
                           <CalendarTodayIcon sx={{ fontSize: '1rem' }} />
-                          <span className="meta-label">Uploaded:</span>
+                          <span className="meta-label">Indexed:</span>
                           <span className="meta-value">{formatDate(currentVideo.upload_date)}</span>
                         </div>
                       </div>
@@ -397,7 +475,7 @@ function App() {
                       <div className="ai-panel-header">
                         <h3>
                           <SmartToyIcon sx={{ fontSize: '1.1rem' }} />
-                          AI Learning Assistant
+                          Industrial Knowledge Copilot
                         </h3>
                         <button
                           className="close-ai-btn"

@@ -67,8 +67,8 @@ function Login({ onLoginSuccess }) {
     <div className="login-container">
       <div className="login-box">
         <div className="login-header">
-          <h1>Knowledge Transfer Hub</h1>
-          <p>Your onboarding & learning companion</p>
+          <h1>AssetOps Brain</h1>
+          <p>Unified industrial knowledge intelligence for plant teams</p>
         </div>
 
         <div className="login-tabs">

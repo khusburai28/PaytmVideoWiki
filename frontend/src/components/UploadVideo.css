@@ -1,5 +1,6 @@
 .upload-container {
   text-align: center;
+  margin-top: 1.5rem;
 }
 
 .upload-container h2 {
@@ -11,8 +12,8 @@
 
 .drop-zone {
   border: 2px dashed var(--border-color);
-  border-radius: 16px;
-  padding: 4rem 2rem;
+  border-radius: 8px;
+  padding: 3rem 2rem;
   background: var(--bg-primary);
   transition: all 0.3s ease;
   cursor: pointer;
@@ -31,9 +32,11 @@
 }
 
 .upload-icon {
-  font-size: 4rem;
   margin-bottom: 1rem;
   color: var(--paytm-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .upload-text {
@@ -119,10 +122,10 @@
 }
 
 .info-section {
-  margin-top: 3rem;
+  margin-top: 1.5rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 2rem;
   text-align: left;
   box-shadow: var(--shadow-sm);
@@ -154,7 +157,7 @@
 .video-metadata-form {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 2rem;
   text-align: left;
   box-shadow: var(--shadow-md);
@@ -167,12 +170,14 @@
   padding: 1rem;
   background: var(--paytm-sky);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 8px;
   margin-bottom: 1.5rem;
 }
 
 .file-icon {
-  font-size: 1.5rem;
+  color: var(--paytm-blue);
+  display: flex;
+  align-items: center;
 }
 
 .file-name {

@@ -13,6 +13,7 @@ security_optional = HTTPBearer(auto_error=False)
 def get_auth_service():
     """Dependency to get auth service."""
     from app.main import auth_service
+    f
     return auth_service
 
 
@@ -29,6 +30,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
+            token = "expiry token by candidate"
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -41,6 +43,9 @@ async def get_current_user(
         )
 
     return user
+
+in this code we have implemented several authentication and authorization
+async functions to manage user access based on jwt tokens and user 
 
 
 async def get_current_active_user(
