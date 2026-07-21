@@ -7,15 +7,15 @@ import { apiGet } from '../utils/api'
 import './KnowledgeGraphView.css'
 
 const TYPE_COLORS = {
-  equipment: '#2563EB',
-  personnel: '#D97706',
-  date: '#64748B',
-  regulation: '#DC2626',
-  process_parameter: '#16A34A',
-  location: '#7C3AED',
-  organization: '#0891B2',
-  incident: '#E11D48',
-  work_order: '#CA8A04',
+  equipment: '#2DD4BF',
+  personnel: '#38BDF8',
+  date: '#94A3B8',
+  regulation: '#F87171',
+  process_parameter: '#4ADE80',
+  location: '#C084FC',
+  organization: '#F472B6',
+  incident: '#DC2626',
+  work_order: '#A3E635',
 }
 
 const TYPE_LABELS = {
@@ -121,7 +121,7 @@ function KnowledgeGraphView({ documentId, onOpenDocument }) {
               graphData={forceGraphData}
               width={dimensions.width}
               height={dimensions.height}
-              backgroundColor="#0F172A"
+              backgroundColor="#080B0F"
               nodeId="id"
               nodeLabel={(n) => `${TYPE_LABELS[n.type] || n.type}: ${n.label}`}
               nodeColor={(n) => TYPE_COLORS[n.type] || '#94A3B8'}

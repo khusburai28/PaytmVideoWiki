@@ -3,14 +3,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 52%, #0F766E 100%);
+  background: radial-gradient(circle at 20% 20%, rgba(45, 212, 191, 0.08), transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(245, 165, 36, 0.1), transparent 50%),
+    var(--bg-secondary);
   padding: 2rem;
 }
 
 .login-box {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   max-width: 450px;
   width: 100%;
   overflow: hidden;
@@ -19,8 +22,7 @@
 .login-header {
   text-align: center;
   padding: 2.5rem 2rem 2rem;
-  background: linear-gradient(135deg, #0F172A 0%, #1D4ED8 100%);
-  color: white;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .login-logo {
@@ -30,20 +32,22 @@
 }
 
 .login-header h1 {
+  font-family: var(--font-display);
   font-size: 1.75rem;
   margin: 0 0 0.5rem;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .login-header p {
   font-size: 0.95rem;
   margin: 0;
-  opacity: 0.9;
+  color: var(--text-secondary);
 }
 
 .login-tabs {
   display: flex;
-  border-bottom: 2px solid #E0E0E0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .tab {
@@ -53,29 +57,29 @@
   border: none;
   font-size: 1rem;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
 }
 
 .tab.active {
-  color: #2563EB;
+  color: var(--brand-blue);
 }
 
 .tab.active::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: -1px;
   left: 0;
   right: 0;
   height: 2px;
-  background: #2563EB;
+  background: var(--brand-blue);
 }
 
 .tab:hover:not(.active) {
-  color: #333;
-  background: #F5F5F5;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
 }
 
 .login-form {
@@ -90,15 +94,17 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 600;
-  color: #333;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.85rem 1rem;
-  border: 2px solid #E0E0E0;
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -106,23 +112,23 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #2563EB;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  border-color: var(--brand-blue);
+  box-shadow: 0 0 0 3px rgba(var(--brand-blue-rgb), 0.15);
 }
 
 .password-hint {
   display: block;
   margin-top: 0.5rem;
   font-size: 0.8rem;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .error-message {
-  background: #FEE;
-  border: 1px solid #FCC;
-  color: #C33;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #FCA5A5;
   padding: 0.85rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
@@ -130,20 +136,21 @@
 .submit-btn {
   width: 100%;
   padding: 1rem;
-  background: #2563EB;
-  color: white;
+  background: var(--brand-blue);
+  color: var(--brand-dark-blue);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #0F172A;
+  background: var(--brand-blue-hover);
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 16px rgba(var(--brand-blue-rgb), 0.35);
 }
 
 .submit-btn:disabled {
@@ -155,17 +162,17 @@
 .default-admin-info {
   margin-top: 1.5rem;
   padding: 1rem;
-  background: #F0F9FF;
-  border: 1px solid #2563EB;
-  border-radius: 8px;
+  background: var(--brand-sky);
+  border: 1px solid rgba(var(--brand-blue-rgb), 0.35);
+  border-radius: var(--radius-md);
   font-size: 0.85rem;
 }
 
 .default-admin-info p {
   margin: 0.25rem 0;
-  color: #1E3A8A;
+  color: var(--text-secondary);
 }
 
 .default-admin-info strong {
-  color: #2563EB;
+  color: var(--brand-blue);
 }

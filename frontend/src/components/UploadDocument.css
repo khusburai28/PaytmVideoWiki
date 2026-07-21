@@ -54,8 +54,8 @@
 }
 
 .upload-link:hover {
-  color: var(--brand-dark-blue);
-  border-bottom-color: var(--brand-dark-blue);
+  color: var(--brand-blue-hover);
+  border-bottom-color: var(--brand-blue-hover);
 }
 
 .upload-hint {
@@ -104,9 +104,9 @@
 }
 
 .error-message {
-  background: #FFF3F3;
-  color: #D32F2F;
-  border: 1px solid #FFCDD2;
+  background: rgba(220, 38, 38, 0.1);
+  color: #FCA5A5;
+  border: 1px solid rgba(220, 38, 38, 0.35);
   padding: 1rem 1.5rem;
   border-radius: 12px;
   margin-top: 1.5rem;
@@ -132,9 +132,10 @@
 }
 
 .info-section h3 {
+  font-family: var(--font-display);
   font-size: 1.2rem;
   margin-bottom: 1.2rem;
-  color: var(--brand-dark-blue);
+  color: var(--brand-blue);
   font-weight: 600;
 }
 
@@ -265,7 +266,7 @@
 }
 
 .btn-upload:hover {
-  background: var(--brand-dark-blue);
+  background: var(--brand-blue-hover);
 }
 
 .upload-status {

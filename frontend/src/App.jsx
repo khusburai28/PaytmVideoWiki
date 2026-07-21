@@ -23,41 +23,22 @@ import PersonIcon from '@mui/icons-material/Person'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import CloseIcon from '@mui/icons-material/Close'
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import TableChartIcon from '@mui/icons-material/TableChart'
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo'
 import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
-const intelligenceModules = [
-  {
-    title: 'Universal Ingestion',
-    description: 'Index field videos, procedures, inspection notes, OEM references, drawings, and spreadsheets into one searchable asset memory.',
-    metric: '4',
-    label: 'formats unified'
-  },
-  {
-    title: 'Asset Knowledge Graph',
-    description: 'Connect equipment tags, people, dates, process parameters, incidents, work orders, and regulatory clauses across every record.',
-    metric: '360',
-    label: 'asset context'
-  },
-  {
-    title: 'Corpus-Wide Copilot',
-    description: 'Ask one question and get answers fused across every ingested document, with citations back to the exact page, sheet row, or timestamp.',
-    metric: '18-22%',
-    label: 'downtime risk'
-  },
-  {
-    title: 'Compliance Intelligence',
-    description: 'Map procedures and evidence to Factory Act, OISD, PESO, environmental, quality, and customer audit requirements.',
-    metric: 'live',
-    label: 'audit readiness'
-  }
+const checklistItems = [
+  'Every format lands in one searchable memory',
+  'Citations down to the page, row, or timestamp',
+  'Equipment tags link automatically across records'
 ]
 
 const industrialPrompts = [
-  'Which assets have repeated seal failures and what evidence supports the pattern?',
-  'Create an RCA brief for Pump P-204 using prior inspection and maintenance context.',
-  'Show compliance gaps against PESO and OISD requirements for this operating area.',
-  'What lessons learned should the shift team know before restarting the line?'
+  'Create an RCA brief for Pump P-204 from prior inspections',
+  'What compliance gaps exist against PESO and OISD?'
 ]
 
 function App() {
@@ -412,42 +393,63 @@ function App() {
                 <div className="upload-section">
                   <section className="ops-hero">
                     <div className="ops-hero-copy">
-                      <span className="ops-eyebrow">Industrial Intelligence / Knowledge Engineering</span>
-                      <h2>Turn fragmented plant knowledge into one operational brain.</h2>
-                      <p>
-                        Ingest operational evidence, extract asset context, and let teams query maintenance,
-                        safety, quality, and compliance knowledge at the point of need.
-                      </p>
-                    </div>
-                    <div className="ops-signal-panel">
-                      <div>
-                        <span className="signal-value">35%</span>
-                        <span className="signal-label">time lost searching for information</span>
+                      <span className="ops-eyebrow-pill">
+                        <span className="pill-dot" />
+                        4 formats · 1 knowledge graph
+                      </span>
+                      <h2>One operational brain<br />for every asset record.</h2>
+                      <p>Feed it videos, PDFs, photos, and spreadsheets. Ask it anything. It cites its sources.</p>
+                      <div className="ops-hero-actions">
+                        <button
+                          className="btn-pill btn-pill-light"
+                          onClick={() => document.getElementById('ingest-panel')?.scrollIntoView({ behavior: 'smooth' })}
+                        >
+                          Start Ingesting
+                        </button>
+                        <button className="btn-pill btn-pill-accent" onClick={() => setCurrentView('graph')}>
+                          See the Graph <HubIcon sx={{ fontSize: '1.05rem' }} />
+                        </button>
                       </div>
-                      <div>
-                        <span className="signal-value">25%</span>
-                        <span className="signal-label">experienced engineers retiring this decade</span>
+                      <ul className="ops-checklist">
+                        {checklistItems.map((item) => (
+                          <li key={item}>
+                            <CheckCircleIcon />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="ops-constellation" aria-hidden="true">
+                      <svg className="constellation-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M 14 12 Q 40 30, 50 50" />
+                        <path d="M 10 66 Q 30 55, 50 50" />
+                        <path d="M 78 32 Q 60 42, 50 50" />
+                        <path d="M 82 80 Q 65 65, 50 50" />
+                      </svg>
+                      <div className="constellation-node" />
+                      <div className="evidence-card evidence-card-1">
+                        <PictureAsPdfIcon />
+                        Page 4 · Inspection Report
+                      </div>
+                      <div className="evidence-card evidence-card-2">
+                        <TableChartIcon />
+                        WO-2041 · B-102
+                      </div>
+                      <div className="evidence-card evidence-card-3 tag-chip">P-204</div>
+                      <div className="evidence-card evidence-card-4">
+                        <OndemandVideoIcon />
+                        12:34 · Shift Briefing
                       </div>
                     </div>
                   </section>
 
-                  <section className="module-grid">
-                    {intelligenceModules.map((module) => (
-                      <article className="module-card" key={module.title}>
-                        <div className="module-stat">
-                          <span>{module.metric}</span>
-                          <small>{module.label}</small>
-                        </div>
-                        <h3>{module.title}</h3>
-                        <p>{module.description}</p>
-                      </article>
-                    ))}
-                  </section>
-
-                  <UploadDocument onDocumentUploaded={handleDocumentUploaded} />
+                  <div id="ingest-panel">
+                    <UploadDocument onDocumentUploaded={handleDocumentUploaded} />
+                  </div>
 
                   <section className="prompt-bank">
-                    <h3>Copilot queries your demo can answer</h3>
+                    <h3>Try asking the copilot</h3>
                     <div className="prompt-grid">
                       {industrialPrompts.map((prompt) => (
                         <div className="prompt-chip" key={prompt}>{prompt}</div>

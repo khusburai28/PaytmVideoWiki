@@ -189,8 +189,8 @@
 }
 
 .modal-btn-primary:hover {
-  background: var(--brand-dark-blue);
-  border-color: var(--brand-dark-blue);
+  background: var(--brand-blue-hover);
+  border-color: var(--brand-blue-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }

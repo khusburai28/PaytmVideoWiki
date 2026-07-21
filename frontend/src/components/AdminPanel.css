@@ -33,7 +33,7 @@
 }
 
 .btn-create-team:hover {
-  background: var(--brand-dark-blue);
+  background: var(--brand-blue-hover);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }
@@ -46,15 +46,15 @@
 }
 
 .alert-error {
-  background: #FEE;
-  border: 1px solid #FCC;
-  color: #C33;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  color: #FCA5A5;
 }
 
 .alert-success {
-  background: #E8F5E9;
-  border: 1px solid #81C784;
-  color: #2E7D32;
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86EFAC;
 }
 
 .teams-grid {
@@ -108,7 +108,7 @@
 
 .member-count {
   background: var(--brand-sky);
-  color: var(--brand-dark-blue);
+  color: var(--brand-blue);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -161,18 +161,18 @@
 }
 
 .role-admin {
-  background: #FFF3E0;
-  color: #E65100;
+  background: rgba(245, 165, 36, 0.15);
+  color: #FBBF24;
 }
 
 .role-team_lead {
-  background: #E3F2FD;
-  color: #1565C0;
+  background: rgba(45, 212, 191, 0.15);
+  color: #5EEAD4;
 }
 
 .role-employee {
-  background: #F3E5F5;
-  color: #6A1B9A;
+  background: rgba(167, 139, 250, 0.15);
+  color: #C4B5FD;
 }
 
 .no-members {
@@ -341,7 +341,7 @@
 }
 
 .btn-submit:hover:not(:disabled) {
-  background: var(--brand-dark-blue);
+  background: var(--brand-blue-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }

@@ -18,6 +18,7 @@
 }
 
 .graph-header h2 {
+  font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -114,6 +115,7 @@
 }
 
 .entity-panel-header h3 {
+  font-family: var(--font-mono);
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
