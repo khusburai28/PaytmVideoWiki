@@ -3,7 +3,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import DescriptionIcon from '@mui/icons-material/Description'
 import './ReportModal.css'
 
-function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
+function ReportModal({ isOpen, onClose, onGenerate, documentName, isGenerating }) {
   const [additionalInstructions, setAdditionalInstructions] = useState('')
 
   const handleSubmit = (e) => {
@@ -33,7 +33,7 @@ function ReportModal({ isOpen, onClose, onGenerate, videoName, isGenerating }) {
 
         <div className="modal-body">
           <p className="modal-description">
-            Generate a maintenance, compliance, or audit-ready evidence pack for <strong>{videoName}</strong>
+            Generate a maintenance, compliance, or audit-ready evidence pack for <strong>{documentName}</strong>
           </p>
 
           <form onSubmit={handleSubmit}>

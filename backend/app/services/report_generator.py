@@ -1,9 +1,11 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from datetime import datetime
 import markdown
 from weasyprint import HTML, CSS
 from pathlib import Path
+
+from app.utils.locators import format_locator
 
 logger = logging.getLogger(__name__)
 
@@ -15,17 +17,17 @@ class ReportGenerator:
 
     def generate_report_content(
         self,
-        video_name: str,
+        document_name: str,
         description: str,
-        duration: float,
+        duration: Optional[float],
         segments: List[Dict],
         additional_instructions: str = None
     ) -> str:
         """Generate structured markdown report using AI."""
 
-        # Combine all transcript segments
+        # Combine all chunks, tagging each with its locator (timestamp, page, or sheet/row range)
         full_transcript = "\n\n".join([
-            f"[{self._format_time(seg['start_time'])}] {seg['text']}"
+            f"[{format_locator(seg)}] {seg['text']}"
             for seg in segments
         ])
 
@@ -52,28 +54,30 @@ IMPORTANT: These are the user's specific requirements. They are MANDATORY and sh
 
 Ensure EVERY section of the report addresses these user instructions where applicable."""
 
+        duration_line = f"Duration: {self._format_time(duration)}\n" if duration else ""
+
         # Create AI prompt for report generation
-        prompt = f"""You are a technical documentation expert. Generate a comprehensive, well-structured technical report based on the following video transcript.
+        prompt = f"""You are a technical documentation expert. Generate a comprehensive, well-structured technical report based on the following source document content.
 {instruction_header}
 
-Video Title: {video_name}
+Document Title: {document_name}
 Description: {description}
-Duration: {self._format_time(duration)}
-
-TRANSCRIPT:
+{duration_line}
+CONTENT:
 {full_transcript[:20000]}  # Limit to avoid token limits
 
 """
 
+        document_meta_line = f"- **Duration**: {self._format_time(duration)}\n" if duration else ""
+
         additional_report_formatting_rule = f"""
 Generate a professional technical report in Markdown format with the following structure:
 
-# {video_name}
+# {document_name}
 
 ## Document Information
 - **Date**: {datetime.now().strftime('%B %d, %Y')}
-- **Duration**: {self._format_time(duration)}
-- **Description**: {description}
+{document_meta_line}- **Description**: {description}
 
 ## Executive Summary
 [2-3 paragraph summary of the entire video content, highlighting the main objectives and key takeaways]
@@ -309,18 +313,18 @@ Important:
 
     async def generate_report(
         self,
-        video_id: str,
-        video_name: str,
-        video_description: str,
-        duration: float,
+        document_id: str,
+        document_name: str,
+        document_description: str,
+        duration: Optional[float],
         segments: List[Dict],
         additional_instructions: str = None
     ) -> str:
         """Generate complete PDF report and return path."""
         # Generate markdown content
         markdown_content = self.generate_report_content(
-            video_name=video_name,
-            description=video_description,
+            document_name=document_name,
+            description=document_description,
             duration=duration,
             segments=segments,
             additional_instructions=additional_instructions
@@ -331,7 +335,7 @@ Important:
         output_dir.mkdir(exist_ok=True)
 
         # Generate output path
-        output_path = output_dir / f"{video_id}_report.pdf"
+        output_path = output_dir / f"{document_id}_report.pdf"
 
         # Convert to PDF
         self.markdown_to_pdf(markdown_content, str(output_path))

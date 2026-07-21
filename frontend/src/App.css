@@ -153,7 +153,7 @@
   border-color: var(--brand-blue);
   color: white;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 186, 242, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--brand-blue-rgb), 0.3);
 }
 
 .logout-btn:active {
@@ -171,6 +171,28 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.main-content.graph-view-page,
+.main-content.copilot-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.copilot-page .chat-interface {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .main-content.graph-view-page,
+  .main-content.copilot-page {
+    padding: 0.5rem;
+  }
 }
 
 .upload-section {
@@ -526,7 +548,7 @@
   background: var(--brand-dark-blue);
   border-color: var(--brand-dark-blue);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }
 
 .generate-diagram-btn:active,
@@ -593,7 +615,7 @@
 
 .ask-ai-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.4);
+  box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.4);
 }
 
 .ask-ai-btn:active {

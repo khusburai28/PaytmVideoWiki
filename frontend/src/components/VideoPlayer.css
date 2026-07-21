@@ -12,12 +12,12 @@
 }
 
 .video-js .vjs-big-play-button {
-  border-color: var(--brand-blue, #00BAF2);
-  background-color: rgba(0, 186, 242, 0.8);
+  border-color: var(--brand-blue);
+  background-color: rgba(var(--brand-blue-rgb), 0.8);
 }
 
 .video-js .vjs-big-play-button:hover {
-  background-color: var(--brand-blue, #00BAF2);
+  background-color: var(--brand-blue);
 }
 
 .video-js .vjs-control-bar {
@@ -26,5 +26,5 @@
 
 .video-js .vjs-play-progress,
 .video-js .vjs-volume-level {
-  background-color: var(--brand-blue, #00BAF2);
+  background-color: var(--brand-blue);
 }

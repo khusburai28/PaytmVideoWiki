@@ -30,5 +30,10 @@ markdown==3.5.1
 weasyprint>=62.0
 
 # File Processing
-PyPDF2==3.0.1
+PyMuPDF==1.24.14
 Pillow==10.2.0
+pandas==2.2.3
+openpyxl==3.1.5
+
+# Knowledge Graph
+networkx==3.4.2

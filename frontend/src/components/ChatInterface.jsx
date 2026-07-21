@@ -8,10 +8,19 @@ import CloseIcon from '@mui/icons-material/Close'
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile'
 import ImageIcon from '@mui/icons-material/Image'
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
+import TableChartIcon from '@mui/icons-material/TableChart'
+import OndemandVideoIcon from '@mui/icons-material/OndemandVideo'
 import { apiPost } from '../utils/api'
 import './ChatInterface.css'
 
-function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
+const SOURCE_ICONS = {
+  video: OndemandVideoIcon,
+  pdf: PictureAsPdfIcon,
+  image: ImageIcon,
+  spreadsheet: TableChartIcon,
+}
+
+function ChatInterface({ documentId, onSourceClick, showHeader = true }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -26,6 +35,11 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Reset the conversation when switching between document-scoped and corpus-wide chat
+  useEffect(() => {
+    setMessages([])
+  }, [documentId])
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files)
@@ -52,105 +66,6 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
-  const formatTime = (seconds) => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = Math.floor(seconds % 60)
-
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-    }
-    return `${minutes}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const parseTimeToSeconds = (timeStr) => {
-    // Parse formats like "01:26" or "1:26:30"
-    const parts = timeStr.split(':').map(Number)
-    if (parts.length === 2) {
-      // MM:SS
-      return parts[0] * 60 + parts[1]
-    } else if (parts.length === 3) {
-      // HH:MM:SS
-      return parts[0] * 3600 + parts[1] * 60 + parts[2]
-    }
-    return 0
-  }
-
-  const extractTextContent = (content) => {
-    // Recursively extract all text content from React elements
-    if (!content) return ''
-
-    if (typeof content === 'string') {
-      return content
-    }
-
-    if (Array.isArray(content)) {
-      return content.map(extractTextContent).join('')
-    }
-
-    if (content?.props?.children) {
-      return extractTextContent(content.props.children)
-    }
-
-    return String(content)
-  }
-
-  const renderMessageWithClickableTimestamps = (content) => {
-    // Handle different types of content
-    if (!content) return ''
-
-    // If content is a complex React element (like nested lists), render it recursively
-    if (Array.isArray(content)) {
-      return content.map((item, idx) => {
-        if (typeof item === 'string') {
-          return renderMessageWithClickableTimestamps(item)
-        }
-        // For React elements like <ul>, <ol>, etc., return them as-is
-        // They will be processed by ReactMarkdown's component renderers
-        return item
-      })
-    }
-
-    // If it's not a string and not an array, try to extract text
-    let text = typeof content === 'string' ? content : extractTextContent(content)
-
-    // Match MM:SS or HH:MM:SS patterns (without square brackets)
-    const timestampRegex = /\b(\d{1,2}:\d{2}(?::\d{2})?)\b/g
-    const parts = []
-    let lastIndex = 0
-    let match
-
-    while ((match = timestampRegex.exec(text)) !== null) {
-      // Add text before the timestamp
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index))
-      }
-
-      // Add clickable timestamp
-      const timeStr = match[1]
-      const seconds = parseTimeToSeconds(timeStr)
-      parts.push(
-        <span
-          key={`ts-${match.index}`}
-          className="inline-timestamp"
-          onClick={() => onTimestampClick(seconds)}
-          title={`Jump to ${timeStr}`}
-        >
-          {timeStr}
-        </span>
-      )
-
-      lastIndex = match.index + match[0].length
-    }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex))
-    }
-
-    return parts.length > 0 ? parts : text
-  }
-
   const handleSend = async () => {
     if ((!input.trim() && attachedFiles.length === 0) || loading) return
 
@@ -170,12 +85,13 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
 
     try {
       const formData = new FormData()
-      formData.append('video_id', videoId)
+      if (documentId) {
+        formData.append('document_id', documentId)
+      }
       formData.append('message', currentInput)
       formData.append('conversation_history', JSON.stringify(messages))
 
-      // Append all files
-      currentFiles.forEach((file, index) => {
+      currentFiles.forEach((file) => {
         formData.append('files', file)
       })
 
@@ -191,7 +107,7 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
         role: 'assistant',
         content: data.response,
         timestamp: new Date().toISOString(),
-        timestamps: data.timestamps
+        sources: data.sources || []
       }
 
       setMessages(prev => [...prev, assistantMessage])
@@ -225,7 +141,11 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
             <SmartToyIcon sx={{ fontSize: '1.2rem', verticalAlign: 'middle', marginRight: '0.5rem' }} />
             Industrial Knowledge Copilot
           </h2>
-          <p>Ask across asset history, operating context, and evidence sources</p>
+          <p>
+            {documentId
+              ? 'Ask across this record\'s indexed content'
+              : 'Ask across your entire team\'s knowledge base'}
+          </p>
         </div>
       )}
 
@@ -236,7 +156,7 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
               <WavingHandIcon sx={{ fontSize: '1.1rem', verticalAlign: 'middle', marginRight: '0.3rem' }} />
               Welcome to your Industrial Knowledge Copilot.
             </p>
-            <p>Ask about asset behavior, failure patterns, safety procedures, compliance evidence, or lessons learned. I will answer with cited moments from the indexed record.</p>
+            <p>Ask about asset behavior, failure patterns, safety procedures, compliance evidence, or lessons learned. I will answer with cited sources from the indexed knowledge base.</p>
             <div className="example-questions">
               <p><strong>Example questions:</strong></p>
               <ul>
@@ -254,37 +174,7 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
             <div className="message-content">
               <div className="message-text">
                 {message.role === 'assistant' ? (
-                  <ReactMarkdown
-                    components={{
-                      // Custom text renderer to make timestamps clickable
-                      p: ({ children }) => <p>{renderMessageWithClickableTimestamps(children)}</p>,
-                      li: ({ children }) => {
-                        // For list items, process text content while preserving nested elements
-                        const processContent = (content) => {
-                          if (typeof content === 'string') {
-                            // Skip whitespace-only strings
-                            if (content.trim() === '') return null
-                            return renderMessageWithClickableTimestamps(content)
-                          }
-                          if (Array.isArray(content)) {
-                            return content.map((item, idx) => {
-                              if (typeof item === 'string') {
-                                // Skip whitespace-only strings
-                                if (item.trim() === '') return null
-                                return <span key={idx}>{renderMessageWithClickableTimestamps(item)}</span>
-                              }
-                              // Preserve nested elements like <ul>, <ol>
-                              return item
-                            }).filter(Boolean)
-                          }
-                          return content
-                        }
-                        return <li>{processContent(children)}</li>
-                      },
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
                 ) : (
                   <>
                     {message.content}
@@ -302,6 +192,29 @@ function ChatInterface({ videoId, onTimestampClick, showHeader = true }) {
                   </>
                 )}
               </div>
+
+              {message.role === 'assistant' && message.sources && message.sources.length > 0 && (
+                <div className="sources-section">
+                  <p className="sources-label">Sources</p>
+                  {message.sources.map((source, idx) => {
+                    const SourceIcon = SOURCE_ICONS[source.document_type] || InsertDriveFileIcon
+                    return (
+                      <div
+                        key={idx}
+                        className="source-chip"
+                        onClick={() => onSourceClick && onSourceClick(source)}
+                        title={`Open ${source.document_name}`}
+                      >
+                        <SourceIcon sx={{ fontSize: '1.1rem' }} className="source-chip-icon" />
+                        <div className="source-chip-text">
+                          <span className="source-chip-name">{source.document_name}</span>
+                          <span className="source-chip-locator">{source.locator}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           </div>
         ))}

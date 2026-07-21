@@ -1,11 +1,10 @@
 from google import genai
 from google.genai import types
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Type
 import logging
-import base64
-from PIL import Image
-import io
-import PyPDF2
+import fitz  # PyMuPDF
+
+from app.utils.locators import format_locator
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ class GeminiClient:
         context_segments: List[Dict],
         conversation_history: List[Dict] = None
     ) -> str:
-        """Generate response using Gemini with context from video transcripts."""
+        """Generate response using Gemini with context retrieved from the document corpus."""
 
         # Build context from retrieved segments
         context_text = self._build_context(context_segments)
@@ -34,27 +33,28 @@ class GeminiClient:
         logger.debug(f"Context text preview: {context_text[:500]}...")
 
         # Build the system prompt with context
-        system_prompt = f"""You are a concise knowledge transfer assistant for developer training videos.
+        system_prompt = f"""You are a concise industrial knowledge assistant. You answer questions using
+evidence pulled from ingested plant documents (videos, PDFs, images, spreadsheets).
 
 Guidelines:
 - Format answers using bullet points for better readability
 - Keep each bullet point clear and concise
-- Use timestamps MM:SS or HH:MM:SS when referencing specific moments (DO NOT use square brackets around timestamps)
-- Answer naturally as if you watched the video
+- Each context item below is tagged with its source, e.g. "[Document Name — Page 4]" or "[Document Name — 12:34]" - you don't need to repeat these tags verbatim, just answer naturally
+- Answer naturally as if you reviewed the source material yourself
 - For simple questions, provide 2-3 key bullet points
 - For detailed questions, organize information in logical bullet point sections
-- Skip phrases like "based on the transcript" - just answer directly
+- Skip phrases like "based on the documents" - just answer directly
 - Use sub-bullets for additional details when needed
 - Use your own knowledge as well to answer the question
 
-Video Content:
+Source Content:
 {context_text}
 """
 
         # Build the user query
         user_prompt = f"""Question: {query}
 
-Answer concisely using the video content. Keep it brief and natural."""
+Answer concisely using the source content above. Keep it brief and natural."""
 
         try:
             # Build full prompt with conversation history if available
@@ -87,12 +87,14 @@ Answer concisely using the video content. Keep it brief and natural."""
             raise Exception(f"Failed to generate response: {str(e)}")
 
     def _build_context(self, segments: List[Dict]) -> str:
-        """Build context string from transcript segments."""
+        """Build context string from chunk payloads, tagging each with its document name
+        and a type-appropriate locator (timestamp, page number, or sheet/row range)."""
         context_parts = []
         for seg in segments:
-            timestamp = self._format_timestamp(seg['start_time'])
-            text = seg['text']
-            context_parts.append(f"[{timestamp}] {text}")
+            locator = format_locator(seg)
+            doc_name = seg.get('document_name')
+            tag = f"{doc_name} — {locator}" if doc_name else locator
+            context_parts.append(f"[{tag}] {seg['text']}")
 
         return "\n".join(context_parts)
 
@@ -106,41 +108,51 @@ Answer concisely using the video content. Keep it brief and natural."""
             return f"{hours:02d}:{minutes:02d}:{secs:02d}"
         return f"{minutes:02d}:{secs:02d}"
 
-    def extract_timestamps_from_response(self, response_text: str, all_segments: List[Dict]) -> List[Dict]:
-        """
-        Extract timestamp references from the AI response.
-        This is a simple implementation - matches timestamps mentioned in the response
-        with the original segments.
-        """
-        referenced_segments = []
-
-        # Simple approach: return the segments that were used in context
-        # In a more advanced implementation, you could parse the response for specific timestamp mentions
-        for seg in all_segments:
-            referenced_segments.append({
-                "start_time": seg['start_time'],
-                "end_time": seg['end_time'],
-                "text": seg['text'][:100] + "..." if len(seg['text']) > 100 else seg['text'],
-                "relevance_score": seg.get('score', 0.8)
-            })
-
-        return referenced_segments[:3]  # Return top 3 most relevant
-
     def generate_content(self, prompt: str) -> str:
-        """Generate content using Gemini for report generation."""
+        """Generate content using Gemini for report generation / summaries."""
         try:
-            logger.info(f"[Gemini API - Report] Generating content with prompt length: {len(prompt)} chars")
+            logger.info(f"[Gemini API - Content] Generating content with prompt length: {len(prompt)} chars")
 
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=prompt
             )
 
-            logger.info(f"[Gemini API - Report] Response received: {len(response.text)} chars")
+            logger.info(f"[Gemini API - Content] Response received: {len(response.text)} chars")
             return response.text
         except Exception as e:
             logger.error(f"Gemini API error: {e}")
             raise Exception(f"Failed to generate content: {str(e)}")
+
+    def generate_structured(self, prompt: str, response_schema: Type) -> str:
+        """Generate content constrained to a JSON schema (a Pydantic model class) and
+        return the raw JSON text. Used for entity/relationship extraction."""
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema
+                )
+            )
+            return response.text
+        except Exception as e:
+            logger.error(f"Gemini structured generation error: {e}")
+            raise Exception(f"Failed structured generation: {str(e)}")
+
+    def describe_image(self, image_bytes: bytes, instruction: str, mime_type: str = "image/png") -> str:
+        """Send an image to Gemini vision and return the generated text. Used both for
+        standalone image ingestion and for OCR-ing scanned/drawing-heavy PDF pages."""
+        try:
+            response = self.client.models.generate_content(
+                model=self.model_name,
+                contents=[types.Part.from_bytes(data=image_bytes, mime_type=mime_type), instruction]
+            )
+            return response.text
+        except Exception as e:
+            logger.error(f"Gemini vision error: {e}")
+            raise Exception(f"Failed to describe image: {str(e)}")
 
     def generate_response_with_files(
         self,
@@ -149,13 +161,14 @@ Answer concisely using the video content. Keep it brief and natural."""
         conversation_history: List[Dict] = None,
         files: List[Dict] = None
     ) -> str:
-        """Generate response using Gemini with context and optional file uploads."""
+        """Generate response using Gemini with context and optional ad-hoc file uploads
+        attached directly to this chat turn (these files are not indexed into the corpus)."""
 
         # If no files, use regular response generation
         if not files:
             return self.generate_response(query, context_segments, conversation_history)
 
-        # Build context from video segments
+        # Build context from retrieved chunks
         context_text = self._build_context(context_segments) if context_segments else ""
 
         # Process files and create content parts
@@ -170,8 +183,7 @@ Answer concisely using the video content. Keep it brief and natural."""
             try:
                 if file_type.startswith('image/'):
                     # Handle image files
-                    image = Image.open(io.BytesIO(content))
-                    content_parts.append(types.Part.from_image(image=image))
+                    content_parts.append(types.Part.from_bytes(data=content, mime_type=file_type))
                     file_descriptions.append(f"- Image: {filename}")
                     logger.info(f"Processed image: {filename}")
 
@@ -198,25 +210,24 @@ Answer concisely using the video content. Keep it brief and natural."""
                 file_descriptions.append(f"- File (error processing): {filename}")
 
         # Build the system prompt
-        video_section = f"Video Content:\n{context_text}" if context_text else ""
+        context_section = f"Source Content:\n{context_text}" if context_text else ""
         files_section = "Uploaded Files:\n" + "\n".join(file_descriptions) if file_descriptions else ""
 
-        system_prompt = f"""You are a knowledge transfer assistant helping users understand video content and analyze uploaded files.
+        system_prompt = f"""You are an industrial knowledge assistant helping users understand ingested documents and analyze ad-hoc uploaded files.
 
 Guidelines:
-- Answer questions about both the video content and uploaded files
+- Answer questions about both the source content and uploaded files
 - Format answers using bullet points for clarity
-- Use timestamps MM:SS or HH:MM:SS when referencing video moments (DO NOT use square brackets around timestamps)
 - Reference specific parts of uploaded files when relevant
 - Provide clear, concise responses
 
-{video_section}
+{context_section}
 
 {files_section}
 """
 
         # Build user query
-        user_prompt = f"Question: {query}\n\nPlease answer based on the video content and uploaded files."
+        user_prompt = f"Question: {query}\n\nPlease answer based on the source content and uploaded files."
 
         try:
             # Create content with both text and file parts
@@ -238,29 +249,23 @@ Guidelines:
             raise Exception(f"Failed to generate response with files: {str(e)}")
 
     def _extract_pdf_text(self, pdf_content: bytes) -> str:
-        """Extract text from PDF bytes."""
+        """Extract text from PDF bytes (used for ad-hoc chat attachments)."""
         try:
-            pdf_file = io.BytesIO(pdf_content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            text_parts = []
-
-            # Extract text from first 10 pages
-            for page_num in range(min(10, len(pdf_reader.pages))):
-                page = pdf_reader.pages[page_num]
-                text_parts.append(page.extract_text())
-
+            doc = fitz.open(stream=pdf_content, filetype="pdf")
+            text_parts = [doc[i].get_text() for i in range(min(10, len(doc)))]
+            doc.close()
             return "\n".join(text_parts)
         except Exception as e:
             logger.error(f"PDF extraction error: {e}")
             return ""
 
     def generate_diagram(self, query: str, segments: List[Dict]) -> str:
-        """Generate a Mermaid diagram based on video content and user query."""
-        # Build context from transcript segments
-        context_text = self._build_context(segments[:50])  # Use first 50 segments for context
+        """Generate a Mermaid diagram based on a document's content and a user query."""
+        # Build context from chunk payloads
+        context_text = self._build_context(segments[:50])  # Use first 50 chunks for context
 
         # Build the system prompt specifically for diagram generation
-        system_prompt = f"""You are a diagram generation assistant. Your task is to create Mermaid diagrams based on video transcript content.
+        system_prompt = f"""You are a diagram generation assistant. Your task is to create Mermaid diagrams based on document content.
 
 CRITICAL REQUIREMENTS:
 1. ONLY output valid Mermaid diagram syntax - NO explanations, NO markdown code blocks, NO additional text
@@ -300,12 +305,12 @@ CRITICAL SYNTAX RULES - FOLLOW EXACTLY:
 - Keep the diagram simple - max 10 nodes total
 - For decision nodes, use text like "Is it X?" instead of shapes
 
-Video Transcript Content:
+Source Document Content:
 {context_text}
 """
 
         # Build the user query
-        user_prompt = f"""Based on the video content, create a FLOWCHART diagram that: {query}
+        user_prompt = f"""Based on the document content, create a FLOWCHART diagram that: {query}
 
 IMPORTANT:
 - Use "flowchart TB" or "flowchart LR" format ONLY

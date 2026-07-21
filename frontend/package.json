@@ -17,6 +17,7 @@
     "axios": "^1.6.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-force-graph-2d": "^1.29.1",
     "react-markdown": "^10.1.0",
     "react-mermaid2": "^0.1.4",
     "video.js": "^8.23.7"

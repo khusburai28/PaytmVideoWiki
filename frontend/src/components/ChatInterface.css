@@ -226,79 +226,65 @@
   font-style: italic;
 }
 
-.inline-timestamp {
-  display: inline-block;
-  background: var(--brand-sky);
-  color: var(--brand-dark-blue);
-  padding: 0.15rem 0.5rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.85em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: 1px solid var(--brand-blue);
-  margin: 0 0.2rem;
-}
-
-.inline-timestamp:hover {
-  background: var(--brand-blue);
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 186, 242, 0.3);
-}
-
-.timestamps-section {
+.sources-section {
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border-color);
 }
 
-.timestamps-label {
-  font-size: 0.85rem;
-  color: #888;
+.sources-label {
+  font-size: 0.78rem;
+  color: var(--text-tertiary);
   margin-bottom: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.timestamp-chip {
+.source-chip {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.85rem;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: var(--shadow-sm);
 }
 
-.timestamp-chip:hover {
+.source-chip:hover {
   background: var(--brand-sky);
   border-color: var(--brand-blue);
   transform: translateX(4px);
   box-shadow: var(--shadow-md);
 }
 
-.timestamp-icon {
-  font-size: 1.1rem;
+.source-chip-icon {
   color: var(--brand-blue);
+  flex-shrink: 0;
 }
 
-.timestamp-time {
+.source-chip-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.source-chip-name {
   font-weight: 600;
   color: var(--brand-dark-blue);
-  min-width: 60px;
-  font-size: 0.9rem;
-}
-
-.timestamp-preview {
   font-size: 0.85rem;
-  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.source-chip-locator {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
 .typing-indicator {
@@ -419,7 +405,7 @@
   outline: none;
   border-color: var(--brand-blue);
   background: var(--bg-primary);
-  box-shadow: 0 0 0 4px rgba(0, 186, 242, 0.1);
+  box-shadow: 0 0 0 4px rgba(var(--brand-blue-rgb), 0.1);
 }
 
 .chat-input:disabled {
@@ -454,7 +440,7 @@
 .send-button:hover:not(:disabled) {
   background: var(--brand-dark-blue);
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }
 
 .send-button:disabled {

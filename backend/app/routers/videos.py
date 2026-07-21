@@ -6,48 +6,51 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 from typing import List, Optional
 import logging
 import json
+import mimetypes
+import pandas as pd
 
 from app.models.schemas import (
-    VideoUploadResponse, VideoProcessingStatus, ChatRequest, ChatResponse,
-    VideoInfo, TimestampReference, ReportGenerationRequest,
+    DocumentUploadResponse, DocumentProcessingStatus, ChatRequest, ChatResponse,
+    DocumentInfo, SourceReference, ReportGenerationRequest,
     DiagramGenerationRequest, DiagramGenerationResponse
 )
+from app.services.ingestion.dispatcher import detect_document_type, ALL_ALLOWED_EXTENSIONS
+from app.utils.locators import format_locator
 from app.middleware.auth import get_current_active_user, check_video_permission, require_team_membership, require_team_membership_flexible
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api", tags=["videos"])
+router = APIRouter(prefix="/api", tags=["documents"])
 
 
 def get_dependencies():
     """Get service dependencies from main app."""
     from app.main import (
         settings, video_processor, rag_engine, gemini_client,
-        report_generator, video_metadata, process_video_task, auth_service
+        report_generator, document_metadata, process_document_task, auth_service, knowledge_graph_service
     )
-    return settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service
+    return (settings, video_processor, rag_engine, gemini_client, report_generator,
+            document_metadata, process_document_task, auth_service, knowledge_graph_service)
 
 
-@router.post("/upload", response_model=VideoUploadResponse)
-async def upload_video(
+@router.post("/upload", response_model=DocumentUploadResponse)
+async def upload_document(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     name: str = Form(...),
     description: str = Form(...),
     current_user: dict = Depends(require_team_membership)
 ):
-    """Upload a video file for processing (Team members only)."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+    """Upload a document (video, PDF, image, or spreadsheet) for ingestion (team members only)."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
-        # Validate file type
-        allowed_extensions = {'.mp4', '.avi', '.mov', '.mkv', '.webm'}
-        file_extension = Path(file.filename).suffix.lower()
-
-        if file_extension not in allowed_extensions:
+        document_type = detect_document_type(file.filename)
+        if not document_type:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unsupported file type. Allowed: {', '.join(allowed_extensions)}"
+                detail=f"Unsupported file type. Allowed: {', '.join(sorted(ALL_ALLOWED_EXTENSIONS))}"
             )
 
         # Read file content
@@ -60,12 +63,13 @@ async def upload_video(
                 detail=f"File too large. Maximum size: {settings.max_video_size_mb}MB"
             )
 
-        # Save video
-        video_id, video_path = video_processor.save_video(content, file.filename)
+        # Save file (generic - just writes bytes under the document's id + original extension)
+        document_id, file_path = video_processor.save_video(content, file.filename)
 
         # Initialize metadata
-        video_metadata[video_id] = {
+        document_metadata[document_id] = {
             "filename": file.filename,
+            "document_type": document_type,
             "name": name,
             "description": description,
             "status": "processing",
@@ -76,9 +80,10 @@ async def upload_video(
 
         # Start background processing
         background_tasks.add_task(
-            process_video_task,
-            video_id,
-            video_path,
+            process_document_task,
+            document_id,
+            document_type,
+            file_path,
             file.filename,
             name,
             description,
@@ -86,11 +91,12 @@ async def upload_video(
             current_user.get('team_id')
         )
 
-        return VideoUploadResponse(
-            video_id=video_id,
+        return DocumentUploadResponse(
+            document_id=document_id,
             filename=file.filename,
+            document_type=document_type,
             status="processing",
-            message="Video uploaded successfully. Processing started."
+            message="Document uploaded successfully. Processing started."
         )
 
     except HTTPException:
@@ -100,53 +106,56 @@ async def upload_video(
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 
-@router.get("/status/{video_id}", response_model=VideoProcessingStatus)
-async def get_processing_status(video_id: str, current_user: dict = Depends(require_team_membership)):
-    """Get processing status for a video."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+@router.get("/status/{document_id}", response_model=DocumentProcessingStatus)
+async def get_processing_status(document_id: str, current_user: dict = Depends(require_team_membership)):
+    """Get processing status for a document."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
-    # Check processor status first (for videos currently being processed)
-    status = video_processor.get_status(video_id)
+    # Check processor status first (for documents currently being processed)
+    status = video_processor.get_status(document_id)
 
     if status:
-        return VideoProcessingStatus(
-            video_id=video_id,
+        return DocumentProcessingStatus(
+            document_id=document_id,
             status=status.get('status', 'unknown'),
             progress=status.get('progress', 0),
-            message=status.get('error'),
+            message=status.get('error') or status.get('message'),
             total_segments=status.get('total_segments')
         )
 
-    # Check if video is indexed in Qdrant (completed videos)
-    segment_count = rag_engine.get_video_segment_count(video_id)
+    # Check if document is indexed in Qdrant (completed documents)
+    segment_count = rag_engine.get_document_chunk_count(document_id)
     if segment_count > 0:
-        return VideoProcessingStatus(
-            video_id=video_id,
+        return DocumentProcessingStatus(
+            document_id=document_id,
             status='completed',
             progress=100,
             message=None,
             total_segments=segment_count
         )
 
-    raise HTTPException(status_code=404, detail="Video not found")
+    raise HTTPException(status_code=404, detail="Document not found")
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat_with_video(
-    video_id: str = Form(...),
+async def chat_with_documents(
+    document_id: Optional[str] = Form(None),
     message: str = Form(...),
     conversation_history: str = Form("[]"),
     files: List[UploadFile] = File(default=[]),
     current_user: dict = Depends(require_team_membership)
 ):
-    """Chat with AI about video content with optional file uploads."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+    """Chat with the AI copilot. If document_id is provided, search is scoped to that
+    document; otherwise it searches across the user's entire team corpus."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
         # Parse conversation history
         conv_history = json.loads(conversation_history) if conversation_history else []
 
-        # Process uploaded files if any
+        # Process uploaded files if any (ad-hoc attachments, not indexed)
         file_contents = []
         if files:
             for file in files:
@@ -160,21 +169,31 @@ async def chat_with_video(
                 file_contents.append(file_info)
                 logger.info(f"Received file: {file.filename} ({file.content_type}, {len(content)} bytes)")
 
-        # Search for relevant segments from video
+        # Search for relevant chunks - scoped to one document, or across the team's corpus
         relevant_segments = rag_engine.search_segments(
-            video_id=video_id,
             query=message,
+            document_id=document_id,
+            team_id=current_user.get('team_id') if not document_id else None,
             top_k=15
         )
 
         if not relevant_segments and not file_contents:
             return ChatResponse(
-                response="I couldn't find any relevant information in the video for your question.",
-                timestamps=[],
+                response="I couldn't find any relevant information in the knowledge base for your question.",
+                sources=[],
                 sources_used=0
             )
 
-        # Generate response using Gemini (with files if provided)
+        # Enrich each chunk with its document name/type for citation building and prompt context
+        metadata_cache = {}
+        for seg in relevant_segments:
+            seg_doc_id = seg.get('document_id')
+            if seg_doc_id and seg_doc_id not in metadata_cache:
+                metadata_cache[seg_doc_id] = rag_engine.get_document_metadata(seg_doc_id) or {}
+            meta = metadata_cache.get(seg_doc_id, {})
+            seg['document_name'] = meta.get('name', meta.get('filename', 'Unknown document'))
+
+        # Generate response using Gemini (with ad-hoc files if provided)
         response_text = gemini_client.generate_response_with_files(
             query=message,
             context_segments=relevant_segments,
@@ -182,20 +201,27 @@ async def chat_with_video(
             files=file_contents
         )
 
-        # Extract timestamps as references
-        timestamps = [
-            TimestampReference(
-                start_time=seg['start_time'],
-                end_time=seg['end_time'],
-                text=seg['text'][:100] + "..." if len(seg['text']) > 100 else seg['text'],
+        # Build structured source citations (top 5)
+        sources = [
+            SourceReference(
+                document_id=seg.get('document_id', ''),
+                document_name=seg.get('document_name', 'Unknown document'),
+                document_type=seg.get('document_type', 'video'),
+                locator=format_locator(seg),
+                start_time=seg.get('start_time'),
+                end_time=seg.get('end_time'),
+                page_number=seg.get('page_number'),
+                sheet_name=seg.get('sheet_name'),
+                row_range=seg.get('row_range'),
+                text=seg['text'][:200] + "..." if len(seg['text']) > 200 else seg['text'],
                 relevance_score=seg['score']
             )
-            for seg in relevant_segments[:3]
+            for seg in relevant_segments[:5]
         ]
 
         return ChatResponse(
             response=response_text,
-            timestamps=timestamps,
+            sources=sources,
             sources_used=len(relevant_segments)
         )
 
@@ -210,8 +236,9 @@ async def get_video(
     request: Request,
     current_user: dict = Depends(require_team_membership_flexible)
 ):
-    """Stream video file with range request support."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+    """Stream a video file with range request support (video-specific playback route)."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
         video_path = video_processor.upload_dir / f"{video_id}.mp4"
@@ -273,17 +300,88 @@ async def get_video(
         raise HTTPException(status_code=500, detail="Failed to stream video")
 
 
-@router.get("/videos", response_model=list[VideoInfo])
-async def list_videos(current_user: dict = Depends(require_team_membership)):
-    """Get list of all processed videos."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+@router.get("/document/{document_id}/file")
+async def get_document_file(
+    document_id: str,
+    current_user: dict = Depends(require_team_membership_flexible)
+):
+    """Serve the raw file for a non-video document (PDF/image), for viewers to render."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
+
+    metadata = rag_engine.get_document_metadata(document_id)
+    if not metadata:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    filename = metadata.get('filename', '')
+    ext = Path(filename).suffix.lower()
+    file_path = video_processor.upload_dir / f"{document_id}{ext}"
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    media_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+
+    def iterfile():
+        with open(file_path, 'rb') as f:
+            while chunk := f.read(1024 * 1024):
+                yield chunk
+
+    return StreamingResponse(iterfile(), media_type=media_type)
+
+
+@router.get("/document/{document_id}/preview")
+async def get_spreadsheet_preview(
+    document_id: str,
+    current_user: dict = Depends(require_team_membership)
+):
+    """Return a row preview (first 50 rows per sheet) for a spreadsheet document."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
+
+    metadata = rag_engine.get_document_metadata(document_id)
+    if not metadata or metadata.get('document_type') != 'spreadsheet':
+        raise HTTPException(status_code=404, detail="Spreadsheet preview not available for this document")
+
+    filename = metadata.get('filename', '')
+    ext = Path(filename).suffix.lower()
+    file_path = video_processor.upload_dir / f"{document_id}{ext}"
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
 
     try:
-        videos = []
-        metadata_list = rag_engine.list_all_video_metadata()
+        if ext == '.csv':
+            sheets = {"Sheet1": pd.read_csv(file_path, dtype=str).fillna("")}
+        else:
+            raw_sheets = pd.read_excel(file_path, sheet_name=None, dtype=str)
+            sheets = {name: df.fillna("") for name, df in raw_sheets.items()}
+
+        return {
+            name: {
+                "columns": [str(c) for c in df.columns],
+                "rows": df.head(50).values.tolist(),
+                "total_rows": len(df)
+            }
+            for name, df in sheets.items()
+        }
+    except Exception as e:
+        logger.error(f"Failed to build spreadsheet preview for {document_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to read spreadsheet")
+
+
+@router.get("/documents", response_model=list[DocumentInfo])
+async def list_documents(current_user: dict = Depends(require_team_membership)):
+    """Get list of all processed documents visible to the current user's team."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
+
+    try:
+        documents = []
+        team_id = current_user.get('team_id') if current_user.get('role') != 'admin' else None
+        metadata_list = rag_engine.list_all_document_metadata(team_id=team_id)
 
         for metadata in metadata_list:
-            # Get author name
             author_name = None
             author_id = metadata.get('author_id')
             if author_id:
@@ -294,46 +392,46 @@ async def list_videos(current_user: dict = Depends(require_team_membership)):
                 except Exception as e:
                     logger.warning(f"Failed to fetch author name for user {author_id}: {e}")
 
-            videos.append(VideoInfo(
-                video_id=metadata['video_id'],
+            documents.append(DocumentInfo(
+                document_id=metadata['document_id'],
+                document_type=metadata.get('document_type', 'video'),
                 filename=metadata.get('filename', ''),
                 name=metadata.get('name', metadata.get('filename', '')),
                 description=metadata.get('description'),
                 upload_date=datetime.fromisoformat(metadata['upload_date']) if 'upload_date' in metadata else datetime.now(),
                 total_segments=metadata.get('total_segments', 0),
-                duration=metadata.get('duration', 0),
+                duration=metadata.get('duration'),
                 status='completed',
                 author_name=author_name
             ))
 
-        return sorted(videos, key=lambda x: x.upload_date, reverse=True)
+        return sorted(documents, key=lambda x: x.upload_date, reverse=True)
 
     except Exception as e:
-        logger.error(f"Failed to list videos: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list videos")
+        logger.error(f"Failed to list documents: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list documents")
 
 
-@router.post("/video/{video_id}/report")
-async def generate_video_report(
-    video_id: str,
+@router.post("/document/{document_id}/report")
+async def generate_document_report(
+    document_id: str,
     request: ReportGenerationRequest = ReportGenerationRequest(),
     current_user: dict = Depends(require_team_membership)
 ):
-    """Generate PDF report for a video with optional additional instructions."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+    """Generate a PDF evidence-pack report for a document with optional additional instructions."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
-        # Get video metadata
-        metadata = rag_engine.get_video_metadata(video_id)
+        metadata = rag_engine.get_document_metadata(document_id)
         if not metadata:
-            raise HTTPException(status_code=404, detail="Video not found")
+            raise HTTPException(status_code=404, detail="Document not found")
 
-        # Get full transcript
         results = rag_engine.qdrant_client.scroll(
             collection_name=rag_engine.collection_name,
             scroll_filter=Filter(
                 must=[
-                    FieldCondition(key="video_id", match=MatchValue(value=video_id)),
+                    FieldCondition(key="document_id", match=MatchValue(value=document_id)),
                     FieldCondition(key="chunk_type", match=MatchValue(value="regular"))
                 ]
             ),
@@ -343,19 +441,17 @@ async def generate_video_report(
         )
 
         segments = [r.payload for r in results[0]]
-        segments.sort(key=lambda x: x['start_time'])
+        segments.sort(key=lambda x: (x.get('page_number') is None, x.get('page_number', 0), x.get('start_time') or 0))
 
-        # Generate report with optional additional instructions
         report_path = await report_generator.generate_report(
-            video_id=video_id,
-            video_name=metadata.get('name', metadata.get('filename', 'Untitled')),
-            video_description=metadata.get('description', ''),
-            duration=metadata.get('duration', 0),
+            document_id=document_id,
+            document_name=metadata.get('name', metadata.get('filename', 'Untitled')),
+            document_description=metadata.get('description', ''),
+            duration=metadata.get('duration'),
             segments=segments,
             additional_instructions=request.additional_instructions
         )
 
-        # Return PDF file
         def iterfile():
             with open(report_path, 'rb') as f:
                 while chunk := f.read(1024 * 1024):
@@ -365,7 +461,7 @@ async def generate_video_report(
             iterfile(),
             media_type='application/pdf',
             headers={
-                'Content-Disposition': f'attachment; filename="{metadata.get("name", "video")}_report.pdf"'
+                'Content-Disposition': f'attachment; filename="{metadata.get("name", "document")}_report.pdf"'
             }
         )
 
@@ -376,27 +472,26 @@ async def generate_video_report(
         raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
 
 
-@router.post("/video/{video_id}/diagram", response_model=DiagramGenerationResponse)
-async def generate_video_diagram(
-    video_id: str,
+@router.post("/document/{document_id}/diagram", response_model=DiagramGenerationResponse)
+async def generate_document_diagram(
+    document_id: str,
     request: DiagramGenerationRequest,
     current_user: dict = Depends(require_team_membership)
 ):
-    """Generate a Mermaid diagram based on video content and user query."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+    """Generate a Mermaid diagram based on one document's content and a user query."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
-        # Get video metadata
-        metadata = rag_engine.get_video_metadata(video_id)
+        metadata = rag_engine.get_document_metadata(document_id)
         if not metadata:
-            raise HTTPException(status_code=404, detail="Video not found")
+            raise HTTPException(status_code=404, detail="Document not found")
 
-        # Get full transcript segments (same as report generation)
         results = rag_engine.qdrant_client.scroll(
             collection_name=rag_engine.collection_name,
             scroll_filter=Filter(
                 must=[
-                    FieldCondition(key="video_id", match=MatchValue(value=video_id)),
+                    FieldCondition(key="document_id", match=MatchValue(value=document_id)),
                     FieldCondition(key="chunk_type", match=MatchValue(value="regular"))
                 ]
             ),
@@ -406,9 +501,8 @@ async def generate_video_diagram(
         )
 
         segments = [r.payload for r in results[0]]
-        segments.sort(key=lambda x: x['start_time'])
+        segments.sort(key=lambda x: (x.get('page_number') is None, x.get('page_number', 0), x.get('start_time') or 0))
 
-        # Generate Mermaid diagram using Gemini
         diagram_code = gemini_client.generate_diagram(
             query=request.query,
             segments=segments
@@ -423,45 +517,43 @@ async def generate_video_diagram(
         raise HTTPException(status_code=500, detail=f"Failed to generate diagram: {str(e)}")
 
 
-@router.delete("/video/{video_id}")
-async def delete_video(video_id: str, current_user: dict = Depends(get_current_active_user)):
-    """Delete a video and its data (Author, Team Lead, or Admin only)."""
-    settings, video_processor, rag_engine, gemini_client, report_generator, video_metadata, process_video_task, auth_service = get_dependencies()
+@router.delete("/document/{document_id}")
+async def delete_document(document_id: str, current_user: dict = Depends(get_current_active_user)):
+    """Delete a document and all its data (author, team lead, or admin only)."""
+    (settings, video_processor, rag_engine, gemini_client, report_generator,
+     document_metadata, process_document_task, auth_service, knowledge_graph_service) = get_dependencies()
 
     try:
-        # Get video metadata to check permissions
-        metadata = rag_engine.get_video_metadata(video_id)
+        metadata = rag_engine.get_document_metadata(document_id)
         if not metadata:
-            raise HTTPException(status_code=404, detail="Video not found")
+            raise HTTPException(status_code=404, detail="Document not found")
 
-        # Check if user has permission to delete
         if not check_video_permission(metadata, current_user):
             raise HTTPException(
                 status_code=403,
-                detail="You don't have permission to delete this video"
+                detail="You don't have permission to delete this document"
             )
 
-        # Delete video segments from Qdrant
-        rag_engine.delete_video_segments(video_id)
+        rag_engine.delete_document_chunks(document_id)
+        rag_engine.delete_document_metadata(document_id)
 
-        # Delete video metadata from Qdrant
-        rag_engine.delete_video_metadata(video_id)
+        try:
+            knowledge_graph_service.delete_document(document_id)
+        except Exception as e:
+            logger.warning(f"Failed to prune knowledge graph for {document_id}: {e}")
 
-        # Delete video file
-        video_path = video_processor.upload_dir / f"{video_id}.mp4"
-        if video_path.exists():
-            video_path.unlink()
+        for existing_file in video_processor.upload_dir.glob(f"{document_id}.*"):
+            existing_file.unlink()
 
-        # Delete from in-memory metadata
-        if video_id in video_metadata:
-            del video_metadata[video_id]
+        if document_id in document_metadata:
+            del document_metadata[document_id]
 
-        logger.info(f"Deleted video {video_id} by user {current_user['user_id']}")
+        logger.info(f"Deleted document {document_id} by user {current_user['user_id']}")
 
-        return {"message": "Video deleted successfully", "video_id": video_id}
+        return {"message": "Document deleted successfully", "document_id": document_id}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete video: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to delete video: {str(e)}")
+        logger.error(f"Failed to delete document: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")

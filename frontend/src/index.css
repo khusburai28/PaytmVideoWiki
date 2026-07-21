@@ -7,10 +7,24 @@
 :root {
   /* Industrial Intelligence Brand Colors */
   --brand-blue: #2563EB;
+  --brand-blue-rgb: 37, 99, 235;
   --brand-dark-blue: #0F172A;
   --brand-light-blue: #14B8A6;
   --brand-navy: #1E3A8A;
   --brand-sky: #E0F2FE;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  /* Radius scale */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
   /* UI Colors */
   --bg-primary: #FFFFFF;

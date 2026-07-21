@@ -1,16 +1,19 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime
 
-
-class VideoUploadRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=200, description="Video title/name")
-    description: str = Field(..., min_length=1, max_length=1000, description="Short description of the video")
+DocumentType = Literal["video", "pdf", "image", "spreadsheet"]
 
 
-class VideoUploadResponse(BaseModel):
-    video_id: str
+class DocumentUploadRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200, description="Document title/name")
+    description: str = Field(..., min_length=1, max_length=1000, description="Short description of the document")
+
+
+class DocumentUploadResponse(BaseModel):
+    document_id: str
     filename: str
+    document_type: DocumentType
     status: str
     message: str
 
@@ -22,8 +25,8 @@ class TranscriptSegment(BaseModel):
     confidence: Optional[float] = None
 
 
-class VideoProcessingStatus(BaseModel):
-    video_id: str
+class DocumentProcessingStatus(BaseModel):
+    document_id: str
     status: str  # "processing", "completed", "failed"
     progress: int  # 0-100
     message: Optional[str] = None
@@ -37,26 +40,34 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    video_id: str
+    document_id: Optional[str] = None  # None = search across the user's full team corpus
     message: str
     conversation_history: List[ChatMessage] = Field(default_factory=list)
 
 
-class TimestampReference(BaseModel):
-    start_time: float
-    end_time: float
+class SourceReference(BaseModel):
+    document_id: str
+    document_name: str
+    document_type: DocumentType
+    locator: str  # e.g. "12:34", "Page 4", "Sheet: WorkOrders, Rows 12-21", "Full image"
+    start_time: Optional[float] = None
+    end_time: Optional[float] = None
+    page_number: Optional[int] = None
+    sheet_name: Optional[str] = None
+    row_range: Optional[str] = None
     text: str
     relevance_score: float
 
 
 class ChatResponse(BaseModel):
     response: str
-    timestamps: List[TimestampReference]
+    sources: List[SourceReference]
     sources_used: int
 
 
-class VideoInfo(BaseModel):
-    video_id: str
+class DocumentInfo(BaseModel):
+    document_id: str
+    document_type: DocumentType
     name: str
     description: str
     filename: str

@@ -4,7 +4,7 @@ import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import Mermaid from 'react-mermaid2'
 import './DiagramModal.css'
 
-function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, diagramData }) {
+function DiagramModal({ isOpen, onClose, onGenerate, documentName, isGenerating, diagramData }) {
   const [query, setQuery] = useState('')
   const [renderError, setRenderError] = useState(null)
 
@@ -28,7 +28,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
         <div className="modal-header">
           <h3>
             <AccountTreeIcon sx={{ fontSize: '1.2rem' }} />
-            Generate Knowledge Graph
+            Generate Flow Diagram
           </h3>
           <button className="modal-close-btn" onClick={handleClose}>
             <CloseIcon sx={{ fontSize: '1.2rem' }} />
@@ -37,7 +37,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
 
         <div className="modal-body">
           <p className="modal-description">
-            Generate an asset relationship, process flow, or RCA graph from <strong>{videoName}</strong>
+            Generate an asset relationship, process flow, or RCA graph from <strong>{documentName}</strong>
           </p>
 
           <form onSubmit={handleSubmit}>
@@ -75,7 +75,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
                 disabled={isGenerating || !query.trim()}
               >
                 <AccountTreeIcon sx={{ fontSize: '1rem' }} />
-                {isGenerating ? 'Generating...' : 'Generate Graph'}
+                {isGenerating ? 'Generating...' : 'Generate Diagram'}
               </button>
             </div>
           </form>
@@ -84,7 +84,7 @@ function DiagramModal({ isOpen, onClose, onGenerate, videoName, isGenerating, di
           {diagramData && (
             <div className="diagram-container">
               <div className="diagram-header">
-                <h4>Generated Knowledge Graph</h4>
+                <h4>Generated Flow Diagram</h4>
               </div>
               <div className="diagram-content">
                 {renderError ? (

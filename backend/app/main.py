@@ -12,9 +12,11 @@ from app.services.rag_engine import RAGEngine
 from app.services.gemini_client import GeminiClient
 from app.services.report_generator import ReportGenerator
 from app.services.auth_service import AuthService
+from app.services.knowledge_graph import KnowledgeGraphService
+from app.services.ingestion.dispatcher import DocumentDispatcher
 
 # Import routers
-from app.routers import auth, teams, videos, users
+from app.routers import auth, teams, videos, users, graph
 
 # Configure logging with file rotation
 os.makedirs("logs", exist_ok=True)
@@ -52,10 +54,12 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    qdrant_collection: str = "video_transcripts"
+    qdrant_collection: str = "document_chunks"
+    qdrant_metadata_collection: str = "document_metadata"
     max_video_size_mb: int = 500
     upload_dir: str = "./uploads"
     temp_dir: str = "./temp"
+    data_dir: str = "./data"
     embedding_model: str = "gemini-embedding-001"
     whisper_model: str = "base"
     jwt_secret_key: str = "your-secret-key-change-in-production-min-32-chars"
@@ -103,8 +107,10 @@ try:
         qdrant_host=settings.qdrant_host,
         qdrant_port=settings.qdrant_port,
         collection_name=settings.qdrant_collection,
+        metadata_collection_name=settings.qdrant_metadata_collection,
         gemini_api_key=settings.gemini_api_key,
-        embedding_model=settings.embedding_model
+        embedding_model=settings.embedding_model,
+        gemini_model=settings.gemini_model
     )
     gemini_client = GeminiClient(
         api_key=settings.gemini_api_key,
@@ -115,96 +121,135 @@ try:
         qdrant_client=rag_engine.qdrant_client,
         secret_key=settings.jwt_secret_key
     )
+    knowledge_graph_service = KnowledgeGraphService(
+        gemini_client=gemini_client,
+        storage_path=f"{settings.data_dir}/knowledge_graph.json"
+    )
+    document_dispatcher = DocumentDispatcher(
+        video_processor=video_processor,
+        gemini_client=gemini_client
+    )
     logger.info("All services initialized successfully")
 except Exception as e:
     logger.error(f"Failed to initialize services: {e}")
     raise
 
-# Store video metadata (in-memory cache for processing status)
-video_metadata = {}
+# Store document metadata (in-memory cache for processing status, keyed by document_id)
+document_metadata = {}
 
 
-# Background task for processing video
-async def process_video_task(
-    video_id: str,
-    video_path: str,
+# Background task for processing an uploaded document of any supported type
+async def process_document_task(
+    document_id: str,
+    document_type: str,
+    file_path: str,
     filename: str,
     name: str,
     description: str,
     author_id: str,
     team_id: Optional[str] = None
 ):
-    """Background task to process video."""
+    """Background task to ingest a document: dispatch to the type-specific processor,
+    index the resulting chunks, extract knowledge-graph entities, and save metadata."""
     try:
-        logger.info(f"Starting background processing for video {video_id}")
+        logger.info(f"Starting background processing for {document_type} document {document_id}")
 
-        # Process video (extract audio, transcribe)
-        segments, duration = video_processor.process_video(video_path, video_id)
+        # Dispatch to the right processor (video/pdf/image/spreadsheet)
+        segments, extra_metadata = document_dispatcher.process(document_type, file_path, document_id)
+        duration = extra_metadata.pop("duration", None)
 
         # Update status for indexing
-        video_processor.processing_status[video_id] = {
+        video_processor.processing_status[document_id] = {
             "status": "indexing",
             "progress": 85,
-            "message": "Indexing transcript for AI search..."
+            "message": "Indexing content for AI search..."
         }
 
-        # Index segments in Qdrant with video duration for derived chunks
-        rag_engine.index_video_segments(video_id, segments, duration)
+        # Index chunks in Qdrant
+        indexed_segments = rag_engine.index_document_chunks(
+            document_id=document_id,
+            document_type=document_type,
+            segments=segments,
+            team_id=team_id,
+            author_id=author_id
+        )
+
+        # Update status for graph extraction
+        video_processor.processing_status[document_id] = {
+            "status": "extracting_entities",
+            "progress": 92,
+            "message": "Extracting knowledge graph entities..."
+        }
+
+        # Extract knowledge-graph entities/relationships (best-effort - never blocks ingestion)
+        try:
+            full_text = " ".join(seg["text"] for seg in segments)
+            knowledge_graph_service.extract_and_merge(
+                document_id=document_id,
+                document_name=name,
+                document_type=document_type,
+                full_text=full_text
+            )
+        except Exception as e:
+            logger.warning(f"Knowledge graph extraction failed for {document_id}: {e}")
 
         # Update status for finalizing
-        video_processor.processing_status[video_id] = {
+        video_processor.processing_status[document_id] = {
             "status": "finalizing",
             "progress": 95,
             "message": "Finalizing and saving metadata..."
         }
 
-        # Save video metadata to Qdrant
-        rag_engine.save_video_metadata(
-            video_id=video_id,
+        # Save document metadata to Qdrant
+        rag_engine.save_document_metadata(
+            document_id=document_id,
+            document_type=document_type,
             name=name,
             description=description,
             duration=duration,
             filename=filename,
             total_segments=len(segments),
             author_id=author_id,
-            team_id=team_id
+            team_id=team_id,
+            extra=extra_metadata
         )
 
         # Update in-memory metadata for status tracking
-        video_metadata[video_id] = {
+        document_metadata[document_id] = {
             "filename": filename,
+            "document_type": document_type,
             "name": name,
             "description": description,
             "duration": duration,
             "upload_date": datetime.now(),
             "status": "completed",
             "total_segments": len(segments),
-            "video_path": video_path,
+            "file_path": file_path,
             "author_id": author_id,
             "team_id": team_id
         }
 
         # Final status update
-        video_processor.processing_status[video_id] = {
+        video_processor.processing_status[document_id] = {
             "status": "completed",
             "progress": 100,
-            "message": "Video ready for AI-powered search!",
+            "message": "Document ready for AI-powered search!",
             "total_segments": len(segments)
         }
 
-        logger.info(f"Video {video_id} processed successfully")
+        logger.info(f"Document {document_id} processed successfully")
 
     except Exception as e:
-        logger.error(f"Failed to process video {video_id}: {e}")
-        video_processor.processing_status[video_id] = {
+        logger.error(f"Failed to process document {document_id}: {e}")
+        video_processor.processing_status[document_id] = {
             "status": "failed",
             "progress": 0,
             "error": str(e),
             "message": f"Processing failed: {str(e)}"
         }
-        if video_id in video_metadata:
-            video_metadata[video_id]["status"] = "failed"
-            video_metadata[video_id]["error"] = str(e)
+        if document_id in document_metadata:
+            document_metadata[document_id]["status"] = "failed"
+            document_metadata[document_id]["error"] = str(e)
 
 
 # Include routers
@@ -212,6 +257,7 @@ app.include_router(auth.router)
 app.include_router(teams.router)
 app.include_router(videos.router)
 app.include_router(users.router)
+app.include_router(graph.router)
 
 
 @app.get("/")

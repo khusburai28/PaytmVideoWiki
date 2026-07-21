@@ -128,7 +128,7 @@
 .modal-textarea:focus {
   outline: none;
   border-color: var(--brand-blue);
-  box-shadow: 0 0 0 3px rgba(0, 186, 242, 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--brand-blue-rgb), 0.1);
 }
 
 .modal-textarea:disabled {
@@ -192,7 +192,7 @@
   background: var(--brand-dark-blue);
   border-color: var(--brand-dark-blue);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
+  box-shadow: 0 4px 12px rgba(var(--brand-blue-rgb), 0.3);
 }
 
 .modal-btn-primary:active {

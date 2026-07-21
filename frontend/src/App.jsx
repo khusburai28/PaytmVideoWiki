@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react'
 import VideoPlayer from './components/VideoPlayer'
+import PdfViewer from './components/viewers/PdfViewer'
+import ImageViewer from './components/viewers/ImageViewer'
+import SpreadsheetViewer from './components/viewers/SpreadsheetViewer'
 import ChatInterface from './components/ChatInterface'
-import UploadVideo from './components/UploadVideo'
-import VideoSidebar from './components/VideoSidebar'
+import UploadDocument from './components/UploadDocument'
+import DocumentSidebar from './components/DocumentSidebar'
+import KnowledgeGraphView from './components/KnowledgeGraphView'
 import Login from './components/Login'
 import AdminPanel from './components/AdminPanel'
 import ReportModal from './components/ReportModal'
@@ -10,9 +14,11 @@ import DiagramModal from './components/DiagramModal'
 import DeleteIcon from '@mui/icons-material/Delete'
 import DescriptionIcon from '@mui/icons-material/Description'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import HubIcon from '@mui/icons-material/Hub'
 import LogoutIcon from '@mui/icons-material/Logout'
 import GroupsIcon from '@mui/icons-material/Groups'
-import VideoLibraryIcon from '@mui/icons-material/VideoLibrary'
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
+import ChatIcon from '@mui/icons-material/Chat'
 import PersonIcon from '@mui/icons-material/Person'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
@@ -23,9 +29,9 @@ import './App.css'
 const intelligenceModules = [
   {
     title: 'Universal Ingestion',
-    description: 'Index field videos, procedures, inspection notes, OEM references, drawings, and audit evidence into one searchable asset memory.',
-    metric: '7-12',
-    label: 'systems unified'
+    description: 'Index field videos, procedures, inspection notes, OEM references, drawings, and spreadsheets into one searchable asset memory.',
+    metric: '4',
+    label: 'formats unified'
   },
   {
     title: 'Asset Knowledge Graph',
@@ -34,8 +40,8 @@ const intelligenceModules = [
     label: 'asset context'
   },
   {
-    title: 'Maintenance & RCA',
-    description: 'Surface prior failures, inspection trends, troubleshooting paths, and recommended next actions before downtime escalates.',
+    title: 'Corpus-Wide Copilot',
+    description: 'Ask one question and get answers fused across every ingested document, with citations back to the exact page, sheet row, or timestamp.',
     metric: '18-22%',
     label: 'downtime risk'
   },
@@ -55,30 +61,55 @@ const industrialPrompts = [
 ]
 
 function App() {
-  const [currentVideo, setCurrentVideo] = useState(null)
-  const [videoTime, setVideoTime] = useState(0)
-  const [videos, setVideos] = useState([])
+  const [currentDocument, setCurrentDocument] = useState(null)
+  const [documentTime, setDocumentTime] = useState(0)
+  const [viewerTarget, setViewerTarget] = useState(null)
+  const [documents, setDocuments] = useState([])
   const [generatingReport, setGeneratingReport] = useState(false)
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
-  const [currentView, setCurrentView] = useState('videos') // 'videos' or 'admin'
-  const [showAIPanel, setShowAIPanel] = useState(false) // AI chat panel visibility
-  const [showReportModal, setShowReportModal] = useState(false) // Report modal visibility
-  const [showDiagramModal, setShowDiagramModal] = useState(false) // Diagram modal visibility
+  const [currentView, setCurrentView] = useState('documents') // 'documents' | 'copilot' | 'graph' | 'admin'
+  const [showAIPanel, setShowAIPanel] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [showDiagramModal, setShowDiagramModal] = useState(false)
   const [generatingDiagram, setGeneratingDiagram] = useState(false)
   const [diagramData, setDiagramData] = useState(null)
 
-  const handleVideoUploaded = (videoInfo) => {
-    setCurrentVideo(videoInfo)
-    loadVideos()
+  const handleDocumentUploaded = (docInfo) => {
+    setCurrentDocument(docInfo)
+    loadDocuments()
   }
 
-  const handleTimestampClick = (timestamp) => {
-    setVideoTime(timestamp)
+  const handleSourceClick = (source) => {
+    const target = documents.find(d => d.document_id === source.document_id)
+    if (target) {
+      setCurrentDocument(target)
+      setCurrentView('documents')
+    }
+
+    if (source.document_type === 'video' && source.start_time != null) {
+      setDocumentTime(source.start_time)
+      setViewerTarget(null)
+    } else if (source.document_type === 'pdf' && source.page_number != null) {
+      setViewerTarget({ page: source.page_number })
+    } else {
+      setViewerTarget(null)
+    }
   }
 
-  const handleVideoSelect = (video) => {
-    setCurrentVideo(video)
+  const handleDocumentSelect = (doc) => {
+    setCurrentDocument(doc)
+    setViewerTarget(null)
+    setCurrentView('documents')
+  }
+
+  const handleOpenDocumentFromGraph = (documentId) => {
+    const target = documents.find(d => d.document_id === documentId)
+    if (target) {
+      setCurrentDocument(target)
+      setViewerTarget(null)
+      setCurrentView('documents')
+    }
   }
 
   const formatDate = (dateString) => {
@@ -97,7 +128,7 @@ function App() {
         : {}
 
       const response = await apiPost(
-        `/api/video/${currentVideo.video_id}/report`,
+        `/api/document/${currentDocument.document_id}/report`,
         body
       )
 
@@ -105,14 +136,11 @@ function App() {
         throw new Error('Failed to generate report')
       }
 
-      // Get the PDF blob
       const blob = await response.blob()
-
-      // Create download link
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${currentVideo.name || 'asset-record'}_intelligence_report.pdf`
+      a.download = `${currentDocument.name || 'asset-record'}_intelligence_report.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -133,7 +161,7 @@ function App() {
     setDiagramData(null)
     try {
       const response = await apiPost(
-        `/api/video/${currentVideo.video_id}/diagram`,
+        `/api/document/${currentDocument.document_id}/diagram`,
         { query }
       )
 
@@ -151,25 +179,23 @@ function App() {
     }
   }
 
-  const handleDeleteVideo = async (videoId) => {
+  const handleDeleteDocument = async (documentId) => {
     if (!confirm('Are you sure you want to delete this knowledge record? This action cannot be undone.')) {
       return
     }
 
     try {
-      const response = await apiDelete(`/api/video/${videoId}`)
+      const response = await apiDelete(`/api/document/${documentId}`)
 
       if (!response.ok) {
-        throw new Error('Failed to delete video')
+        throw new Error('Failed to delete document')
       }
 
-      // Clear current video if it was deleted
-      if (currentVideo?.video_id === videoId) {
-        setCurrentVideo(null)
+      if (currentDocument?.document_id === documentId) {
+        setCurrentDocument(null)
       }
 
-      // Reload video list
-      loadVideos()
+      loadDocuments()
 
       alert('Knowledge record deleted successfully')
     } catch (error) {
@@ -178,16 +204,16 @@ function App() {
     }
   }
 
-  const loadVideos = async () => {
+  const loadDocuments = async () => {
     if (!token) return
 
     try {
-      const response = await apiGet('/api/videos')
+      const response = await apiGet('/api/documents')
       const data = await response.json()
-      const records = Array.isArray(data) ? data : (data.videos || data.records || [])
-      setVideos(records.filter(v => v.status === 'completed'))
+      const records = Array.isArray(data) ? data : (data.documents || data.records || [])
+      setDocuments(records.filter(d => d.status === 'completed'))
     } catch (error) {
-      console.error('Failed to load videos:', error)
+      console.error('Failed to load documents:', error)
     }
   }
 
@@ -201,20 +227,17 @@ function App() {
     localStorage.removeItem('user')
     setUser(null)
     setToken(null)
-    setCurrentVideo(null)
-    setVideos([])
+    setCurrentDocument(null)
+    setDocuments([])
   }
 
   useEffect(() => {
-    // Check for existing auth
     const storedToken = localStorage.getItem('access_token')
     const storedUser = localStorage.getItem('user')
 
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
-
-      // Refresh user data from server to get latest info (including team_name)
       refreshUserData(storedToken)
     }
   }, [])
@@ -234,16 +257,14 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      loadVideos()
+      loadDocuments()
     }
   }, [token])
 
-  // Show login if not authenticated
   if (!user || !token) {
     return <Login onLoginSuccess={handleLoginSuccess} />
   }
 
-  // Show team membership required message for non-admin users without a team
   if (user.role !== 'admin' && !user.team_id) {
     return (
       <div className="app">
@@ -287,28 +308,55 @@ function App() {
     )
   }
 
+  const renderViewer = () => {
+    if (!currentDocument) return null
+    switch (currentDocument.document_type) {
+      case 'pdf':
+        return <PdfViewer documentId={currentDocument.document_id} seekTarget={viewerTarget} />
+      case 'image':
+        return <ImageViewer documentId={currentDocument.document_id} />
+      case 'spreadsheet':
+        return <SpreadsheetViewer documentId={currentDocument.document_id} />
+      case 'video':
+      default:
+        return <VideoPlayer videoId={currentDocument.document_id} seekTime={documentTime} />
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-content">
           <div className="header-logo">
-            {/* <img src="/logo.svg" alt="AssetOps Logo" className="brand-logo-img" />
-            <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div> */}
             <div>
               <h1>AssetOps Brain</h1>
               <p>Unified Asset & Operations Intelligence</p>
             </div>
           </div>
           <div className="header-user-info">
-            {user.role === 'admin' && (
-              <div className="view-toggle">
-                <button
-                  className={`toggle-btn ${currentView === 'videos' ? 'active' : ''}`}
-                  onClick={() => setCurrentView('videos')}
-                >
-                  <VideoLibraryIcon sx={{ fontSize: '1rem' }} />
-                  Asset Records
-                </button>
+            <div className="view-toggle">
+              <button
+                className={`toggle-btn ${currentView === 'documents' ? 'active' : ''}`}
+                onClick={() => setCurrentView('documents')}
+              >
+                <LibraryBooksIcon sx={{ fontSize: '1rem' }} />
+                Records
+              </button>
+              <button
+                className={`toggle-btn ${currentView === 'copilot' ? 'active' : ''}`}
+                onClick={() => setCurrentView('copilot')}
+              >
+                <ChatIcon sx={{ fontSize: '1rem' }} />
+                Copilot
+              </button>
+              <button
+                className={`toggle-btn ${currentView === 'graph' ? 'active' : ''}`}
+                onClick={() => setCurrentView('graph')}
+              >
+                <HubIcon sx={{ fontSize: '1rem' }} />
+                Knowledge Graph
+              </button>
+              {user.role === 'admin' && (
                 <button
                   className={`toggle-btn ${currentView === 'admin' ? 'active' : ''}`}
                   onClick={() => setCurrentView('admin')}
@@ -316,8 +364,8 @@ function App() {
                   <GroupsIcon sx={{ fontSize: '1rem' }} />
                   Teams
                 </button>
-              </div>
-            )}
+              )}
+            </div>
             <div className="user-details">
               <span className="user-name">{user.full_name}</span>
               <div className="user-badges">
@@ -343,16 +391,24 @@ function App() {
           <div className="main-content" style={{ maxWidth: '100%' }}>
             <AdminPanel user={user} />
           </div>
+        ) : currentView === 'graph' ? (
+          <div className="main-content graph-view-page">
+            <KnowledgeGraphView onOpenDocument={handleOpenDocumentFromGraph} />
+          </div>
+        ) : currentView === 'copilot' ? (
+          <div className="main-content copilot-page">
+            <ChatInterface documentId={null} onSourceClick={handleSourceClick} />
+          </div>
         ) : (
           <>
-            <VideoSidebar
-              videos={videos}
-              currentVideo={currentVideo}
-              onVideoSelect={handleVideoSelect}
+            <DocumentSidebar
+              documents={documents}
+              currentDocument={currentDocument}
+              onDocumentSelect={handleDocumentSelect}
             />
 
             <div className="main-content">
-              {!currentVideo ? (
+              {!currentDocument ? (
                 <div className="upload-section">
                   <section className="ops-hero">
                     <div className="ops-hero-copy">
@@ -388,7 +444,7 @@ function App() {
                     ))}
                   </section>
 
-                  <UploadVideo onVideoUploaded={handleVideoUploaded} />
+                  <UploadDocument onDocumentUploaded={handleDocumentUploaded} />
 
                   <section className="prompt-bank">
                     <h3>Copilot queries your demo can answer</h3>
@@ -405,14 +461,11 @@ function App() {
                     <div className="video-header">
                       <div className="video-header-info">
                         <h3 className="video-header-title">
-                          {currentVideo.name || currentVideo.filename}
+                          {currentDocument.name || currentDocument.filename}
                         </h3>
                       </div>
                     </div>
-                    <VideoPlayer
-                      videoId={currentVideo.video_id}
-                      seekTime={videoTime}
-                    />
+                    {renderViewer()}
                     <div className="video-actions">
                       {!showAIPanel && (
                         <button
@@ -429,7 +482,7 @@ function App() {
                         disabled={generatingDiagram}
                       >
                         <AccountTreeIcon sx={{ fontSize: '1.1rem' }} />
-                        Knowledge Graph
+                        Flow Diagram
                       </button>
                       <button
                         className="generate-report-btn"
@@ -441,7 +494,7 @@ function App() {
                       </button>
                       <button
                         className="delete-video-btn"
-                        onClick={() => handleDeleteVideo(currentVideo.video_id)}
+                        onClick={() => handleDeleteDocument(currentDocument.document_id)}
                         disabled={generatingReport}
                       >
                         <DeleteIcon sx={{ fontSize: '1.1rem' }} />
@@ -451,20 +504,20 @@ function App() {
                     <div className="video-details-section">
                       <h4 className="video-details-heading">Operational Context</h4>
                       <p className="video-details-description">
-                        {currentVideo.description || 'No description available'}
+                        {currentDocument.description || 'No description available'}
                       </p>
                       <div className="video-metadata">
-                        {currentVideo.author_name && (
+                        {currentDocument.author_name && (
                           <div className="video-meta-item">
                             <PersonIcon sx={{ fontSize: '1rem' }} />
                             <span className="meta-label">Owner:</span>
-                            <span className="meta-value">{currentVideo.author_name}</span>
+                            <span className="meta-value">{currentDocument.author_name}</span>
                           </div>
                         )}
                         <div className="video-meta-item">
                           <CalendarTodayIcon sx={{ fontSize: '1rem' }} />
                           <span className="meta-label">Indexed:</span>
-                          <span className="meta-value">{formatDate(currentVideo.upload_date)}</span>
+                          <span className="meta-value">{formatDate(currentDocument.upload_date)}</span>
                         </div>
                       </div>
                     </div>
@@ -486,8 +539,8 @@ function App() {
                         </button>
                       </div>
                       <ChatInterface
-                        videoId={currentVideo.video_id}
-                        onTimestampClick={handleTimestampClick}
+                        documentId={currentDocument.document_id}
+                        onSourceClick={handleSourceClick}
                         showHeader={false}
                       />
                     </div>
@@ -499,23 +552,17 @@ function App() {
         )}
       </div>
 
-      {/* <footer className="brand-footer">
-        <div className="footer-stripe"></div>
-      </footer> */}
-
-      {/* Report Generation Modal */}
-      {currentVideo && (
+      {currentDocument && (
         <ReportModal
           isOpen={showReportModal}
           onClose={() => setShowReportModal(false)}
           onGenerate={handleGenerateReport}
-          videoName={currentVideo.name || currentVideo.filename}
+          documentName={currentDocument.name || currentDocument.filename}
           isGenerating={generatingReport}
         />
       )}
 
-      {/* Diagram Generation Modal */}
-      {currentVideo && (
+      {currentDocument && (
         <DiagramModal
           isOpen={showDiagramModal}
           onClose={() => {
@@ -523,7 +570,7 @@ function App() {
             setDiagramData(null)
           }}
           onGenerate={handleGenerateDiagram}
-          videoName={currentVideo.name || currentVideo.filename}
+          documentName={currentDocument.name || currentDocument.filename}
           isGenerating={generatingDiagram}
           diagramData={diagramData}
         />
