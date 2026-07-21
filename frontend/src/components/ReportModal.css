@@ -127,7 +127,7 @@
 
 .modal-textarea:focus {
   outline: none;
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
   box-shadow: 0 0 0 3px rgba(0, 186, 242, 0.1);
 }
 
@@ -175,8 +175,8 @@
 
 .modal-btn-primary {
   padding: 0.65rem 1.25rem;
-  background: var(--paytm-blue);
-  border: 1px solid var(--paytm-blue);
+  background: var(--brand-blue);
+  border: 1px solid var(--brand-blue);
   border-radius: 8px;
   color: white;
   font-size: 0.9rem;
@@ -189,8 +189,8 @@
 }
 
 .modal-btn-primary:hover {
-  background: var(--paytm-dark-blue);
-  border-color: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
+  border-color: var(--brand-dark-blue);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }

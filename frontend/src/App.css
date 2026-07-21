@@ -30,7 +30,7 @@
   gap: 1rem;
 }
 
-.paytm-logo-img {
+.brand-logo-img {
   height: 40px;
   width: auto;
 }
@@ -80,12 +80,12 @@
 .toggle-btn:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
 }
 
 .toggle-btn.active {
-  background: var(--paytm-blue);
-  border-color: var(--paytm-blue);
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
   color: white;
 }
 
@@ -110,8 +110,8 @@
 
 .user-role {
   padding: 0.3rem 0.8rem;
-  background: var(--paytm-sky);
-  color: var(--paytm-dark-blue);
+  background: var(--brand-sky);
+  color: var(--brand-dark-blue);
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -149,8 +149,8 @@
 }
 
 .logout-btn:hover {
-  background: var(--paytm-blue);
-  border-color: var(--paytm-blue);
+  background: var(--brand-blue);
+  border-color: var(--brand-blue);
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 186, 242, 0.3);
@@ -199,7 +199,7 @@
 
 .ops-eyebrow {
   display: block;
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -224,7 +224,7 @@
 }
 
 .ops-signal-panel {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
   color: white;
   display: grid;
   gap: 1px;
@@ -276,7 +276,7 @@
 }
 
 .module-stat span {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   font-size: 1.5rem;
   font-weight: 800;
 }
@@ -367,18 +367,18 @@
 .video-card:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-4px);
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
 }
 
 .video-card-thumbnail {
   width: 100%;
   height: 160px;
-  background: linear-gradient(135deg, var(--paytm-sky) 0%, var(--paytm-light-blue) 100%);
+  background: linear-gradient(135deg, var(--brand-sky) 0%, var(--brand-light-blue) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 3rem;
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .video-card-content {
@@ -435,8 +435,8 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.6rem;
-  background: var(--paytm-sky);
-  color: var(--paytm-dark-blue);
+  background: var(--brand-sky);
+  color: var(--brand-dark-blue);
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 500;
@@ -508,8 +508,8 @@
 .generate-diagram-btn,
 .generate-report-btn {
   padding: 0.65rem 1.25rem;
-  background: var(--paytm-blue);
-  border: 1px solid var(--paytm-blue);
+  background: var(--brand-blue);
+  border: 1px solid var(--brand-blue);
   border-radius: 8px;
   color: white;
   font-size: 0.9rem;
@@ -523,8 +523,8 @@
 
 .generate-diagram-btn:hover,
 .generate-report-btn:hover {
-  background: var(--paytm-dark-blue);
-  border-color: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
+  border-color: var(--brand-dark-blue);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }
@@ -577,8 +577,8 @@
 
 .ask-ai-btn {
   padding: 0.65rem 1.25rem;
-  background: linear-gradient(135deg, var(--paytm-blue) 0%, var(--paytm-dark-blue) 100%);
-  border: 1px solid var(--paytm-blue);
+  background: linear-gradient(135deg, var(--brand-blue) 0%, var(--brand-dark-blue) 100%);
+  border: 1px solid var(--brand-blue);
   border-radius: 8px;
   color: white;
   font-size: 0.9rem;
@@ -635,7 +635,7 @@
 }
 
 .video-meta-item .MuiSvgIcon-root {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .video-meta-item .meta-label {
@@ -697,7 +697,7 @@
   color: #dc2626;
 }
 
-.paytm-footer {
+.brand-footer {
   flex-shrink: 0;
 }
 
@@ -710,14 +710,14 @@
   height: 14px;
   content: "";
   display: block;
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
 }
 
 .footer-stripe::after {
   height: 14px;
   content: "";
   display: block;
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
 }
 
 @media (max-width: 1024px) {
@@ -817,7 +817,7 @@
 }
 
 .team-required-card .contact-message strong {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .user-info-box {

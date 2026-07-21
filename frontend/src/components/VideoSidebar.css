@@ -51,8 +51,8 @@
 }
 
 .sidebar-video-item.active {
-  background: var(--paytm-sky);
-  border-left: 3px solid var(--paytm-blue);
+  background: var(--brand-sky);
+  border-left: 3px solid var(--brand-blue);
 }
 
 .sidebar-video-header {
@@ -104,7 +104,7 @@
 
 .sidebar-expand-btn:hover {
   background: var(--border-color);
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .sidebar-video-details {
@@ -163,7 +163,7 @@
 }
 
 .sidebar-videos::-webkit-scrollbar-thumb:hover {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
 }
 
 /* Responsive */

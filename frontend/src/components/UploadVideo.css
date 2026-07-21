@@ -21,19 +21,19 @@
 }
 
 .drop-zone.active {
-  border-color: var(--paytm-blue);
-  background: var(--paytm-sky);
+  border-color: var(--brand-blue);
+  background: var(--brand-sky);
   transform: scale(1.02);
 }
 
 .drop-zone:hover {
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
   box-shadow: var(--shadow-md);
 }
 
 .upload-icon {
   margin-bottom: 1rem;
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -46,16 +46,16 @@
 }
 
 .upload-link {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   text-decoration: none;
   font-weight: 600;
   cursor: pointer;
-  border-bottom: 2px solid var(--paytm-blue);
+  border-bottom: 2px solid var(--brand-blue);
 }
 
 .upload-link:hover {
-  color: var(--paytm-dark-blue);
-  border-bottom-color: var(--paytm-dark-blue);
+  color: var(--brand-dark-blue);
+  border-bottom-color: var(--brand-dark-blue);
 }
 
 .upload-hint {
@@ -68,7 +68,7 @@
   width: 50px;
   height: 50px;
   border: 4px solid var(--border-color);
-  border-top: 4px solid var(--paytm-blue);
+  border-top: 4px solid var(--brand-blue);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 1rem;
@@ -91,7 +91,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--paytm-blue), var(--paytm-light-blue));
+  background: linear-gradient(90deg, var(--brand-blue), var(--brand-light-blue));
   transition: width 0.3s ease;
   border-radius: 10px;
 }
@@ -99,7 +99,7 @@
 .progress-text {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   margin-top: 0.5rem;
 }
 
@@ -134,7 +134,7 @@
 .info-section h3 {
   font-size: 1.2rem;
   margin-bottom: 1.2rem;
-  color: var(--paytm-dark-blue);
+  color: var(--brand-dark-blue);
   font-weight: 600;
 }
 
@@ -149,7 +149,7 @@
 }
 
 .info-section li::marker {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   font-weight: 600;
 }
 
@@ -168,14 +168,14 @@
   align-items: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: var(--paytm-sky);
+  background: var(--brand-sky);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   margin-bottom: 1.5rem;
 }
 
 .file-icon {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   display: flex;
   align-items: center;
 }
@@ -215,7 +215,7 @@
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
 }
 
 .form-group textarea {
@@ -260,12 +260,12 @@
 }
 
 .btn-upload {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   color: white;
 }
 
 .btn-upload:hover {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
 }
 
 .upload-status {
@@ -320,13 +320,13 @@
 }
 
 .stage.active .stage-icon {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   opacity: 1;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .stage.completed .stage-icon {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   opacity: 0.7;
 }
 
@@ -341,7 +341,7 @@
 }
 
 .stage.active .stage-label {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
   font-weight: 600;
 }
 

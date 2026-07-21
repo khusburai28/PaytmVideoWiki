@@ -22,7 +22,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   color: white;
   border: none;
   border-radius: 8px;
@@ -33,7 +33,7 @@
 }
 
 .btn-create-team:hover {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }
@@ -107,8 +107,8 @@
 }
 
 .member-count {
-  background: var(--paytm-sky);
-  color: var(--paytm-dark-blue);
+  background: var(--brand-sky);
+  color: var(--brand-dark-blue);
   padding: 0.25rem 0.75rem;
   border-radius: 12px;
   font-size: 0.75rem;
@@ -191,8 +191,8 @@
   width: 100%;
   padding: 0.6rem;
   background: transparent;
-  border: 1px solid var(--paytm-blue);
-  color: var(--paytm-blue);
+  border: 1px solid var(--brand-blue);
+  color: var(--brand-blue);
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -202,7 +202,7 @@
 }
 
 .btn-add-member:hover {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   color: white;
 }
 
@@ -294,7 +294,7 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
   box-shadow: 0 0 0 3px rgba(0, 186, 242, 0.1);
 }
 
@@ -330,7 +330,7 @@
 
 .btn-submit {
   padding: 0.65rem 1.25rem;
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   border: none;
   color: white;
   border-radius: 8px;
@@ -341,7 +341,7 @@
 }
 
 .btn-submit:hover:not(:disabled) {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }

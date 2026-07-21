@@ -292,7 +292,7 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-logo">
-            {/* <img src="/logo.svg" alt="AssetOps Logo" className="paytm-logo-img" />
+            {/* <img src="/logo.svg" alt="AssetOps Logo" className="brand-logo-img" />
             <div style={{ borderLeft: '2px solid #E0E0E0', height: '30px', margin: '0 0.5rem' }}></div> */}
             <div>
               <h1>AssetOps Brain</h1>
@@ -499,7 +499,7 @@ function App() {
         )}
       </div>
 
-      {/* <footer className="paytm-footer">
+      {/* <footer className="brand-footer">
         <div className="footer-stripe"></div>
       </footer> */}
 

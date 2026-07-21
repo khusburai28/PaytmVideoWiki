@@ -35,8 +35,8 @@
 }
 
 .welcome-message {
-  background: var(--paytm-sky);
-  border: 1px solid var(--paytm-blue);
+  background: var(--brand-sky);
+  border: 1px solid var(--brand-blue);
   border-radius: 12px;
   padding: 2rem;
   text-align: center;
@@ -58,7 +58,7 @@
 }
 
 .example-questions strong {
-  color: var(--paytm-dark-blue);
+  color: var(--brand-dark-blue);
   font-size: 0.9rem;
 }
 
@@ -108,7 +108,7 @@
 }
 
 .message.user .message-content {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   color: white;
   border-bottom-right-radius: 4px;
   box-shadow: var(--shadow-sm);
@@ -219,7 +219,7 @@
 }
 
 .message.assistant .message-text blockquote {
-  border-left: 3px solid var(--paytm-blue);
+  border-left: 3px solid var(--brand-blue);
   padding-left: 1rem;
   margin: 0;
   color: var(--text-secondary);
@@ -228,20 +228,20 @@
 
 .inline-timestamp {
   display: inline-block;
-  background: var(--paytm-sky);
-  color: var(--paytm-dark-blue);
+  background: var(--brand-sky);
+  color: var(--brand-dark-blue);
   padding: 0.15rem 0.5rem;
   border-radius: 6px;
   font-weight: 600;
   font-size: 0.85em;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid var(--paytm-blue);
+  border: 1px solid var(--brand-blue);
   margin: 0 0.2rem;
 }
 
 .inline-timestamp:hover {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 186, 242, 0.3);
@@ -275,20 +275,20 @@
 }
 
 .timestamp-chip:hover {
-  background: var(--paytm-sky);
-  border-color: var(--paytm-blue);
+  background: var(--brand-sky);
+  border-color: var(--brand-blue);
   transform: translateX(4px);
   box-shadow: var(--shadow-md);
 }
 
 .timestamp-icon {
   font-size: 1.1rem;
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .timestamp-time {
   font-weight: 600;
-  color: var(--paytm-dark-blue);
+  color: var(--brand-dark-blue);
   min-width: 60px;
   font-size: 0.9rem;
 }
@@ -310,7 +310,7 @@
 .typing-indicator span {
   width: 8px;
   height: 8px;
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   border-radius: 50%;
   animation: bounce 1.4s infinite ease-in-out;
 }
@@ -351,15 +351,15 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: var(--paytm-sky);
-  border: 1px solid var(--paytm-blue);
+  background: var(--brand-sky);
+  border: 1px solid var(--brand-blue);
   border-radius: 8px;
   font-size: 0.85rem;
   color: var(--text-primary);
 }
 
 .attached-file-chip .MuiSvgIcon-root {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .attached-file-name {
@@ -417,7 +417,7 @@
 
 .chat-input:focus {
   outline: none;
-  border-color: var(--paytm-blue);
+  border-color: var(--brand-blue);
   background: var(--bg-primary);
   box-shadow: 0 0 0 4px rgba(0, 186, 242, 0.1);
 }
@@ -435,7 +435,7 @@
 
 .send-button {
   padding: 0 1.5rem;
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   border: none;
   border-radius: 28px;
   color: white;
@@ -452,7 +452,7 @@
 }
 
 .send-button:hover:not(:disabled) {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 186, 242, 0.3);
 }
@@ -486,9 +486,9 @@
 }
 
 .attach-button:hover:not(:disabled) {
-  background: var(--paytm-sky);
-  border-color: var(--paytm-blue);
-  color: var(--paytm-blue);
+  background: var(--brand-sky);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
 }
 
 .attach-button:disabled {
@@ -515,7 +515,7 @@
 }
 
 .message-file-item .MuiSvgIcon-root {
-  color: var(--paytm-blue);
+  color: var(--brand-blue);
 }
 
 .message-file-item .file-name {

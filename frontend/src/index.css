@@ -6,11 +6,11 @@
 
 :root {
   /* Industrial Intelligence Brand Colors */
-  --paytm-blue: #2563EB;
-  --paytm-dark-blue: #0F172A;
-  --paytm-light-blue: #14B8A6;
-  --paytm-navy: #1E3A8A;
-  --paytm-sky: #E0F2FE;
+  --brand-blue: #2563EB;
+  --brand-dark-blue: #0F172A;
+  --brand-light-blue: #14B8A6;
+  --brand-navy: #1E3A8A;
+  --brand-sky: #E0F2FE;
 
   /* UI Colors */
   --bg-primary: #FFFFFF;
@@ -55,10 +55,10 @@ code {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--paytm-blue);
+  background: var(--brand-blue);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--paytm-dark-blue);
+  background: var(--brand-dark-blue);
 }
