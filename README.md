@@ -1,74 +1,75 @@
-# Video RAG System
+# AssetOps Brain — Industrial Knowledge Intelligence Platform
 
-A secure, local video RAG (Retrieval-Augmented Generation) system that allows you to chat with your videos, get AI-powered answers with precise timestamps, and navigate directly to relevant video segments.
+Ingests videos, PDFs, images, and spreadsheets into one unified, queryable knowledge base — with a real extracted knowledge graph and a corpus-wide RAG copilot with citations. Built to address knowledge fragmentation in asset-intensive industrial operations: maintenance records, inspection reports, safety procedures, and drawings scattered across disconnected systems, made queryable from one place.
 
 ## Features
 
-- Upload and process videos locally (keeps your confidential data secure)
-- Automatic transcription with timestamps using Whisper
-- AI-powered chat interface with follow-up questions
-- Clickable timestamps that jump to exact video moments
-- Vector search using Qdrant for accurate context retrieval
-- Powered by Google Gemini API for intelligent responses
+- **Multi-format ingestion** — video (Whisper transcription), PDF (page-level text extraction with Gemini-vision OCR fallback for scanned pages), images (Gemini-vision description/OCR), spreadsheets (XLSX/XLS/CSV with per-sheet and per-row-group chunking)
+- **Knowledge graph** — entities (equipment, personnel, dates, regulations, process parameters, locations, organizations, incidents, work orders) and relationships extracted via Gemini structured output, persisted with networkx. The same equipment tag mentioned across a PDF, spreadsheet, and image collapses into one shared node — proving the knowledge is actually unified, not just co-located
+- **Corpus-wide copilot** — ask a question scoped to one document, or across your whole team's knowledge base, with structured source citations (timestamp / page number / sheet+row range, depending on document type)
+- **Document viewers** — video player, native PDF viewer with page deep-linking, image viewer, spreadsheet row preview
+- **Evidence packs & diagrams** — generate a PDF evidence-pack report or an ad-hoc Mermaid flow diagram for any document
+- **Team-based auth** — admin / team lead / employee roles, with team-scoped visibility
 
 ## Tech Stack
 
 - **Backend**: FastAPI (Python)
 - **Frontend**: React + Vite
-- **Vector Database**: Qdrant (self-hosted)
-- **LLM**: Google Gemini API
-- **Transcription**: OpenAI Whisper
-- **Video Processing**: ffmpeg
+- **Vector Database**: Qdrant (self-hosted; also used as the app's document/user/team datastore)
+- **LLM, embeddings & vision**: Google Gemini API
+- **Knowledge graph**: networkx, persisted as JSON (no separate graph database)
+- **Video transcription**: OpenAI Whisper + ffmpeg
+- **PDF parsing**: PyMuPDF
+- **Spreadsheet parsing**: pandas / openpyxl
+- **Graph visualization**: react-force-graph-2d
 - **Deployment**: Docker Compose
 
 ## Prerequisites
 
 - Docker and Docker Compose
-- Google Gemini API key ([Get it here](https://aistudio.google.com/app/api-keys))
+- Google Gemini API key ([get one here](https://aistudio.google.com/app/api-keys)) — note the free tier caps `gemini-2.5-flash` at roughly 20 requests/day; use a paid tier for real testing or a demo, since ingestion, chat, and entity extraction all consume this quota
 - At least 4GB RAM for video processing
 
 ## Quick Start
 
-1. **Clone and setup**
-   ```bash
-   cd VideoRAG
-   ```
-
-2. **Configure environment**
+1. **Configure environment**
    ```bash
    cp .env.example .env
-   # Edit .env and add your GEMINI_API_KEY
+   # edit .env and add your GEMINI_API_KEY
    ```
 
-3. **Start the application**
+2. **Start the application**
    ```bash
    docker-compose up -d
    ```
 
-4. **Access the application**
+3. **Access the application**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
 
+## Default Admin Account
 
-## Default Admin Account:
-
-- Email: admin@example.com
-- Password: Admin@123456
+- Email: `admin@example.com`
+- Password: `Admin@123456`
 
 ## Usage
 
-1. **Upload Video**: Click "Upload Video" and select your MP4/MOV/AVI file
-2. **Wait for Processing**: The system will transcribe and index your video (takes 2-5 minutes)
-3. **Start Chatting**: Ask questions about the video content
-4. **Click Timestamps**: Click any timestamp in the chat to jump to that moment in the video
+1. **Ingest**: click "Ingest & Index" and drop a video, PDF, image, or spreadsheet — or use the ready-made files in [`sample_data/`](sample_data/README.md)
+2. **Wait for processing**: video transcription takes the longest (minutes); PDFs, images, and spreadsheets typically finish in seconds
+3. **Explore**:
+   - **Records** — browse and search your document library, view or play each document, generate an evidence-pack report or a quick flow diagram
+   - **Copilot** — ask questions scoped to one open document, or use the top-nav Copilot for corpus-wide search across everything your team has ingested
+   - **Knowledge Graph** — see extracted entities and relationships across your whole corpus; click a node to see which documents mention it
+
+## Sample Documents
+
+[`sample_data/`](sample_data/README.md) contains synthetic industrial documents — two PDFs, a multi-sheet work-order spreadsheet, and two images — that deliberately reuse the same equipment tags across formats, so you can watch the knowledge graph cross-link them after ingestion.
 
 ## Security & Privacy
 
-- All video processing happens locally
-- Videos never leave your infrastructure
-- Qdrant vector database runs locally
-- Only chat queries and transcription text are sent to Gemini API (not the video itself)
+- All processing happens in your own Docker environment
+- Only extracted text/embeddings and chat queries are sent to the Gemini API — original files stay on your infrastructure
 - Add network isolation in production
 
 ## Development
@@ -77,7 +78,7 @@ A secure, local video RAG (Retrieval-Augmented Generation) system that allows yo
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  
+source venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
@@ -89,9 +90,9 @@ npm install
 npm run dev
 ```
 
-## If any changes are made then we can rebuild using
+## Rebuilding after changes
 
-```
+```bash
 # If changes made to frontend
 docker-compose up -d --build frontend
 
@@ -101,18 +102,35 @@ docker-compose up -d --build backend
 
 ## Configuration
 
-Edit `.env` file:
+Edit `.env`:
 
 ```env
 # Gemini API
 GEMINI_API_KEY=your_api_key_here
-GEMINI_MODEL=gemini-3.1-pro-preview
+GEMINI_MODEL=gemini-2.5-flash
 
 # Qdrant
-QDRANT_HOST=localhost
+QDRANT_HOST=qdrant
 QDRANT_PORT=6333
+QDRANT_COLLECTION=document_chunks
+QDRANT_METADATA_COLLECTION=document_metadata
 
-# Upload settings
-MAX_VIDEO_SIZE_MB=500
+# Application settings
+MAX_VIDEO_SIZE_MB=5120
 UPLOAD_DIR=./uploads
+TEMP_DIR=./temp
+DATA_DIR=./data
+
+# Embedding model (Gemini)
+EMBEDDING_MODEL=gemini-embedding-001
+
+# Whisper settings
+WHISPER_MODEL=base
+# Options: tiny, base, small, medium, large — larger = more accurate but slower
 ```
+
+## Roadmap
+
+Not yet built, but the data model leaves room for both without further schema changes:
+- **Maintenance Intelligence & RCA Agent** — the knowledge graph already models `incident` and `work_order` entity types
+- **Quality & Regulatory Compliance Intelligence** — the graph already models `regulation` entities and links them to equipment
