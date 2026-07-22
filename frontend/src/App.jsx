@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import heroConfusionImage from './assets/hero-confusion.png'
 import VideoPlayer from './components/VideoPlayer'
 import PdfViewer from './components/viewers/PdfViewer'
 import ImageViewer from './components/viewers/ImageViewer'
@@ -24,9 +25,6 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import SmartToyIcon from '@mui/icons-material/SmartToy'
 import CloseIcon from '@mui/icons-material/Close'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf'
-import TableChartIcon from '@mui/icons-material/TableChart'
-import OndemandVideoIcon from '@mui/icons-material/OndemandVideo'
 import { apiGet, apiPost, apiDelete } from './utils/api'
 import './App.css'
 
@@ -34,11 +32,6 @@ const checklistItems = [
   'Every format lands in one searchable memory',
   'Citations down to the page, row, or timestamp',
   'Equipment tags link automatically across records'
-]
-
-const industrialPrompts = [
-  'Create an RCA brief for Pump P-204 from prior inspections',
-  'What compliance gaps exist against PESO and OISD?'
 ]
 
 function App() {
@@ -420,42 +413,14 @@ function App() {
                       </ul>
                     </div>
 
-                    <div className="ops-constellation" aria-hidden="true">
-                      <svg className="constellation-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <path d="M 14 12 Q 40 30, 50 50" />
-                        <path d="M 10 66 Q 30 55, 50 50" />
-                        <path d="M 78 32 Q 60 42, 50 50" />
-                        <path d="M 82 80 Q 65 65, 50 50" />
-                      </svg>
-                      <div className="constellation-node" />
-                      <div className="evidence-card evidence-card-1">
-                        <PictureAsPdfIcon />
-                        Page 4 · Inspection Report
-                      </div>
-                      <div className="evidence-card evidence-card-2">
-                        <TableChartIcon />
-                        WO-2041 · B-102
-                      </div>
-                      <div className="evidence-card evidence-card-3 tag-chip">P-204</div>
-                      <div className="evidence-card evidence-card-4">
-                        <OndemandVideoIcon />
-                        12:34 · Shift Briefing
-                      </div>
+                    <div className="ops-hero-image">
+                      <img src={heroConfusionImage} alt="Field technician overwhelmed searching scattered SOPs, drawings, logs, reports, videos, and emails for an approved procedure" />
                     </div>
                   </section>
 
                   <div id="ingest-panel">
                     <UploadDocument onDocumentUploaded={handleDocumentUploaded} />
                   </div>
-
-                  <section className="prompt-bank">
-                    <h3>Try asking the copilot</h3>
-                    <div className="prompt-grid">
-                      {industrialPrompts.map((prompt) => (
-                        <div className="prompt-chip" key={prompt}>{prompt}</div>
-                      ))}
-                    </div>
-                  </section>
                 </div>
               ) : (
                 <div className={`player-interface ${!showAIPanel ? 'ai-panel-closed' : ''}`}>

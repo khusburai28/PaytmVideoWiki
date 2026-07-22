@@ -121,39 +121,6 @@
   font-size: 1.5rem;
 }
 
-.info-section {
-  margin-top: 1.5rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 2rem;
-  text-align: left;
-  box-shadow: var(--shadow-sm);
-}
-
-.info-section h3 {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  margin-bottom: 1.2rem;
-  color: var(--brand-blue);
-  font-weight: 600;
-}
-
-.info-section ol {
-  margin-left: 1.5rem;
-  line-height: 2;
-}
-
-.info-section li {
-  color: var(--text-primary);
-  font-size: 0.95rem;
-}
-
-.info-section li::marker {
-  color: var(--brand-blue);
-  font-weight: 600;
-}
-
 /* Video metadata form */
 .video-metadata-form {
   background: var(--bg-primary);

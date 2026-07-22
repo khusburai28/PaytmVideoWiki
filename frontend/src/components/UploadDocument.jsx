@@ -292,16 +292,6 @@ function UploadDocument({ onDocumentUploaded }) {
         </div>
       )}
 
-      <div className="info-section">
-        <h3>Industrial Intelligence Workflow</h3>
-        <ol>
-          <li>Ingest videos, PDFs, photos, drawings, and spreadsheets into one unified pipeline.</li>
-          <li>Extract asset tags, failure modes, process parameters, people, dates, and regulatory references.</li>
-          <li>Build a searchable knowledge graph and corpus with citations and confidence-aware answers.</li>
-          <li>Ask the copilot questions across your entire evidence base, not just one document.</li>
-          <li>Serve field technicians, engineers, quality teams, and auditors from the same operational memory.</li>
-        </ol>
-      </div>
     </div>
   )
 }
