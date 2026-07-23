@@ -1,6 +1,20 @@
-# AssetOps Brain — Industrial Knowledge Intelligence Platform
+# KnowForge AI — Industrial Knowledge Intelligence Platform
 
 Ingests videos, PDFs, images, and spreadsheets into one unified, queryable knowledge base — with a real extracted knowledge graph and a corpus-wide RAG copilot with citations. Built to address knowledge fragmentation in asset-intensive industrial operations: maintenance records, inspection reports, safety procedures, and drawings scattered across disconnected systems, made queryable from one place.
+
+## 🎥 Demo
+
+Watch the complete application walkthrough here :
+
+**YouTube :** https://youtu.be/Gchm8ro0RpA?si=pkf9Ix6c4CVP9x3_
+
+## Application Preview
+
+<img width="1287" height="727" alt="Screenshot 2026-07-23 at 4 03 21 PM" src="https://github.com/user-attachments/assets/679f0e90-dc66-484e-a678-c2a0cc82f850" />
+<img width="1296" height="728" alt="Screenshot 2026-07-23 at 4 02 12 PM" src="https://github.com/user-attachments/assets/a1c41e2b-1e31-45ec-a361-607847304e41" />
+<img width="1294" height="726" alt="Screenshot 2026-07-23 at 4 02 40 PM" src="https://github.com/user-attachments/assets/ace9a817-bed2-44e9-889d-18a6ccb459d2" />
+
+
 
 ## Features
 
